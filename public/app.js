@@ -90,4 +90,12 @@ function attachUI() {
 
 document.addEventListener('DOMContentLoaded', attachUI);
 
+// Set dynamic year in header and footer
+document.addEventListener('DOMContentLoaded', () => {
+    const currentYear = String(new Date().getFullYear());
+    document.querySelectorAll('.js-year').forEach((el) => {
+        el.textContent = currentYear;
+    });
+});
+
 

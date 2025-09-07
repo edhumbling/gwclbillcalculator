@@ -78,6 +78,7 @@ input[type="number"]{
 input[type="number"]:focus{ border-color: var(--accent); box-shadow: 0 0 0 3px rgba(90,168,255,0.15); }
 .suffix{ position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 14px; }
 .help{ color: var(--muted); }
+.note{ color: var(--muted); }
 
 .actions{ display: flex; gap: 10px; margin-top: 6px; flex-wrap: wrap; }
 .btn{ padding: 10px 14px; border-radius: 10px; border: 1px solid var(--border); background: #0e1430; color: var(--text); cursor: pointer; }
@@ -99,4 +100,8 @@ input[type="number"]:focus{ border-color: var(--accent); box-shadow: 0 0 0 3px r
 .bullets{ margin: 8px 0 0 0; color: var(--muted); }
 .bullets li{ margin: 6px 0; }
 
+
+@media (max-width: 640px){
+    .site-footer{ justify-content: center; text-align: center; }
+}
 

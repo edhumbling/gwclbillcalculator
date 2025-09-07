@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>GWCL Current Bill Calculator</title>
+    <meta name="description" content="Calculate Ghana Water Company Limited (GWCL) current bill for Domestic Category 611 using 2025 Q3 tariffs." />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+    <header class="site-header">
+        <div class="brand">
+            <img src="/favicon.svg" alt="GWCL" width="28" height="28" />
+            <span>GWCL Current Bill</span>
+        </div>
+        <div class="period">Domestic 611 • 2025 Q3</div>
+    </header>
+
+    <main class="container">
+        <section class="card">
+            <h1>Current Bill Calculator</h1>
+            <p class="subtext">Enter your meter readings in cubic metres (m³). 1 unit = 1 m³.</p>
+
+            <form id="billForm" novalidate>
+                <div class="grid-2">
+                    <div class="field">
+                        <label for="prevReading">Previous reading</label>
+                        <div class="input-wrap">
+                            <input type="number" id="prevReading" inputmode="decimal" step="0.001" min="0" value="61" placeholder="e.g., 61.000" aria-describedby="prevHelp" required />
+                            <span class="suffix">m³</span>
+                        </div>
+                        <small id="prevHelp" class="help">From your last bill</small>
+                    </div>
+
+                    <div class="field">
+                        <label for="currReading">Current reading</label>
+                        <div class="input-wrap">
+                            <input type="number" id="currReading" inputmode="decimal" step="0.001" min="0" value="63" placeholder="e.g., 63.000" aria-describedby="currHelp" required />
+                            <span class="suffix">m³</span>
+                        </div>
+                        <small id="currHelp" class="help">Latest meter value</small>
+                    </div>
+                </div>
+
+                <div class="actions">
+                    <button type="button" id="calcBtn" class="btn primary">Calculate</button>
+                    <button type="reset" id="resetBtn" class="btn ghost">Reset defaults</button>
+                </div>
+                <p class="error" id="error" role="alert" aria-live="polite" hidden></p>
+            </form>
+
+            <div id="result" class="result" hidden>
+                <div class="result-header">
+                    <h2>Current charges</h2>
+                    <div class="total" id="totalGhs">GHS 0.00</div>
+                </div>
+
+                <div class="kv">
+                    <div class="k">Consumption</div>
+                    <div class="v" id="consumption">0.00 m³</div>
+
+                    <div class="k">Water amount</div>
+                    <div class="v" id="waterAmount">GHS 0.00</div>
+
+                    <div class="k">1% Fire levy</div>
+                    <div class="v" id="fire">GHS 0.00</div>
+
+                    <div class="k">2% Rural water levy</div>
+                    <div class="v" id="rural">GHS 0.00</div>
+
+                    <div class="k">Service charge</div>
+                    <div class="v" id="service">GHS 10.00</div>
+                </div>
+
+                <p class="note">Note: This covers current charges only. Previous balances or payments are not included.</p>
+            </div>
+        </section>
+
+        <section class="card info">
+            <details>
+                <summary>Tariff details</summary>
+                <ul class="bullets">
+                    <li>Domestic Category 611 (2025 Q3, July–September, 0% adjustment)</li>
+                    <li>First 5 m³ at GHS 5.28176/m³</li>
+                    <li>Excess above 5 m³ at GHS 9.344558/m³</li>
+                    <li>Levies: 1% Fire Fighting, 2% Rural Water (on water amount)</li>
+                    <li>Service charge: GHS 10.00</li>
+                </ul>
+            </details>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <span>GWCL Current Bill Calculator • 2025</span>
+    </footer>
+
+    <script src="/app.js" defer></script>
+</body>
+</html>
+
+

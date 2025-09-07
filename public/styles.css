@@ -17,6 +17,10 @@ body{
     background: radial-gradient(1000px 600px at 10% -10%, #12204a 0%, var(--bg) 50%), var(--bg);
     color: var(--text);
     line-height: 1.5;
+    min-height: 100vh;
+    min-height: 100svh;
+    display: flex;
+    flex-direction: column;
 }
 
 .site-header, .site-footer{
@@ -37,7 +41,12 @@ body{
 .brand{ display: flex; gap: 10px; align-items: center; font-weight: 700; }
 .period{ color: var(--muted); font-size: 14px; }
 
-.container{ max-width: 880px; margin: 24px auto; padding: 0 16px; }
+.container{
+    max-width: 880px;
+    margin: 24px auto;
+    padding: 0 16px;
+    flex: 1;
+}
 
 .card{
     background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));

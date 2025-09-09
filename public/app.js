@@ -9,6 +9,10 @@ const TARIFFS = {
 
 const fmtMoney = (n) => `GHS ${n.toFixed(2)}`;
 const clamp = (n) => (Number.isFinite(n) && n >= 0 ? n : 0);
+const STORAGE_KEYS = {
+    lastCurrentReading: 'gwcl.lastCurrentReadingM3',
+    lastSavedAt: 'gwcl.lastSavedAt',
+};
 
 function calculateCurrentCharges(prevReading, currReading) {
     const previous = clamp(prevReading);
@@ -69,6 +73,13 @@ function attachUI() {
             out.rural.textContent = fmtMoney(r.rural);
             out.service.textContent = fmtMoney(r.service);
             out.totalGhs.textContent = fmtMoney(r.total);
+
+            try {
+                localStorage.setItem(STORAGE_KEYS.lastCurrentReading, String(curr));
+                localStorage.setItem(STORAGE_KEYS.lastSavedAt, new Date().toISOString());
+            } catch (_) {
+                // Ignore storage errors
+            }
         } catch (e) {
             result.hidden = true;
             errorEl.textContent = e.message;
@@ -86,6 +97,41 @@ function attachUI() {
         errorEl.hidden = true;
         result.hidden = true;
     });
+
+    function proposeSavedPreviousReading() {
+        let saved = NaN;
+        try {
+            saved = parseFloat(localStorage.getItem(STORAGE_KEYS.lastCurrentReading));
+        } catch (_) {
+            saved = NaN;
+        }
+        if (!Number.isFinite(saved)) return;
+
+        const currentPrev = parseFloat(prevEl.value);
+        if (Number.isFinite(currentPrev) && currentPrev === saved) return;
+
+        const useSaved = window.confirm(`Use last saved current reading (${saved.toFixed(3)} m³) as previous reading?`);
+        if (useSaved) {
+            prevEl.value = String(saved);
+        }
+    }
+
+    let prompted = false;
+    // Prompt on first focus of current reading to match the user's flow
+    currEl.addEventListener('focus', () => {
+        if (!prompted) {
+            prompted = true;
+            proposeSavedPreviousReading();
+        }
+    }, { once: false });
+
+    // Also prompt once on load so keyboard/mouse users both get it
+    setTimeout(() => {
+        if (!prompted) {
+            prompted = true;
+            proposeSavedPreviousReading();
+        }
+    }, 0);
 }
 
 document.addEventListener('DOMContentLoaded', attachUI);

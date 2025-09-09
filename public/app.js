@@ -91,9 +91,9 @@ function attachUI() {
     prevEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') run(); });
     currEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') run(); });
     resetBtn.addEventListener('click', () => {
-        // Restore defaults
-        prevEl.value = '61';
-        currEl.value = '63';
+        // Clear fields
+        prevEl.value = '';
+        currEl.value = '';
         errorEl.hidden = true;
         result.hidden = true;
     });

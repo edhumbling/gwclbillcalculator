@@ -22,10 +22,10 @@ function calculateCurrentCharges(prevReading, currReading) {
     }
 
     const consumption = current - previous; // m³
-    const withinFirst = Math.min(consumption, TARIFFS.firstBlockLimitM3);
-    const aboveFirst = Math.max(consumption - TARIFFS.firstBlockLimitM3, 0);
-
-    const waterAmountRaw = withinFirst * TARIFFS.firstBlockRate + aboveFirst * TARIFFS.excessRate;
+    
+    // Threshold-based system: if consumption > 5 m³, use new rate for ALL consumption
+    const rate = consumption > TARIFFS.firstBlockLimitM3 ? TARIFFS.excessRate : TARIFFS.firstBlockRate;
+    const waterAmountRaw = consumption * rate;
     const waterAmount = Math.round(waterAmountRaw * 100) / 100;
     const fire = Math.round(waterAmount * TARIFFS.fireLevyRate * 100) / 100;
     const rural = Math.round(waterAmount * TARIFFS.ruralLevyRate * 100) / 100;
@@ -39,6 +39,7 @@ function calculateCurrentCharges(prevReading, currReading) {
         rural,
         service,
         total,
+        rate,
     };
 }
 

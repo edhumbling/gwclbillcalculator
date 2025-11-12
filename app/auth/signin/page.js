@@ -1,11 +1,19 @@
 'use client'
 
-import { StackAuth } from '@stackframe/stack'
+import { useStackApp } from '@stackframe/stack'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 
+export const dynamic = 'force-dynamic'
+
 export default function SignInPage() {
+  const app = useStackApp()
   const router = useRouter()
+
+  useEffect(() => {
+    // Redirect to Stack Auth sign in
+    app.redirectToSignIn()
+  }, [app])
 
   return (
     <div style={{
@@ -22,23 +30,21 @@ export default function SignInPage() {
         borderRadius: '14px',
         padding: '32px',
         maxWidth: '400px',
-        width: '100%'
+        width: '100%',
+        textAlign: 'center'
       }}>
         <h1 style={{
           marginBottom: '24px',
           fontSize: '24px',
           fontWeight: '700',
-          color: 'var(--text, #e2e8f0)',
-          textAlign: 'center'
+          color: 'var(--text, #e2e8f0)'
         }}>
-          Sign In
+          Redirecting to sign in...
         </h1>
-        <StackAuth
-          fullPage={false}
-          afterSignInUrl="/"
-        />
+        <p style={{ color: 'var(--muted, #64748b)' }}>
+          Please wait while we redirect you.
+        </p>
       </div>
     </div>
   )
 }
-

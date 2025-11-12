@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useRef } from 'react'
 import Image from 'next/image'
+import { useStackApp } from '@stackframe/stack'
+import AuthButton from './AuthButton'
 
 const TARIFFS = {
     firstBlockLimitM3: 5,
@@ -71,6 +73,10 @@ export default function BillCalculator() {
     const [showProcessBtn, setShowProcessBtn] = useState(false);
     const [processing, setProcessing] = useState(false);
     const [isParsing, setIsParsing] = useState(false);
+    const [readingHistory, setReadingHistory] = useState([]);
+    const [loadingHistory, setLoadingHistory] = useState(false);
+    const [savingReading, setSavingReading] = useState(false);
+    const [showHistory, setShowHistory] = useState(false);
 
     const videoRef = useRef(null);
     const canvasRef = useRef(null);
@@ -78,6 +84,7 @@ export default function BillCalculator() {
     const streamRef = useRef(null);
     const fileInputRef = useRef(null);
     const currentYear = new Date().getFullYear();
+    const stackApp = useStackApp();
 
     useEffect(() => {
         // Propose saved reading on mount
@@ -219,10 +226,6 @@ export default function BillCalculator() {
         
         const imageData = canvas.toDataURL('image/jpeg', 0.7);
         setCapturedImage(imageData);
-        if (previewImageRef.current) {
-            previewImageRef.current.src = imageData;
-        }
-        
         setShowVideo(false);
         setShowPreview(true);
         setShowCaptureBtn(false);
@@ -269,14 +272,10 @@ export default function BillCalculator() {
         const reader = new FileReader();
         reader.onload = (e) => {
             const imageData = e.target.result;
-            setCapturedImage(imageData);
-            if (previewImageRef.current) {
-                previewImageRef.current.src = imageData;
-            }
-            
             // Stop camera if running
             stopCamera();
             setShowVideo(false);
+            setCapturedImage(imageData);
             setShowPreview(true);
             setShowCaptureBtn(false);
             setShowRetakeBtn(true);
@@ -377,6 +376,22 @@ export default function BillCalculator() {
         }
     };
 
+    // Update preview image when capturedImage changes and preview is shown
+    useEffect(() => {
+        if (capturedImage && showPreview && previewImageRef.current) {
+            previewImageRef.current.src = capturedImage;
+        }
+    }, [capturedImage, showPreview]);
+
+    // Load reading history when user is authenticated
+    useEffect(() => {
+        stackApp.getUser().then((user) => {
+            if (user) {
+                loadReadingHistory();
+            }
+        });
+    }, []);
+
     useEffect(() => {
         const handleEscape = (e) => {
             if (e.key === 'Escape' && showModal) {
@@ -394,7 +409,10 @@ export default function BillCalculator() {
                     <Image src="/favicon.svg" alt="GWCL" width={28} height={28} />
                     <span>GWCL Current Bill</span>
                 </div>
-                <div className="period">Domestic 611 • {currentYear}</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                    <div className="period">Domestic 611 • {currentYear}</div>
+                    <AuthButton />
+                </div>
             </header>
 
             <main className="container">
@@ -503,6 +521,89 @@ export default function BillCalculator() {
                             </div>
 
                             <p className="note">Note: This covers current charges only. Previous balances or payments are not included.</p>
+                            
+                            <div className="actions" style={{ marginTop: '16px' }}>
+                                <button 
+                                    type="button" 
+                                    onClick={saveReading} 
+                                    className="btn secondary"
+                                    disabled={savingReading}
+                                >
+                                    {savingReading ? 'Saving...' : 'Save Reading'}
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </section>
+
+                <section className="card">
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                        <h2>Reading History</h2>
+                        <button 
+                            type="button" 
+                            onClick={() => {
+                                setShowHistory(!showHistory);
+                                if (!showHistory) loadReadingHistory();
+                            }}
+                            className="btn ghost"
+                        >
+                            {showHistory ? 'Hide' : 'Show'} History
+                        </button>
+                    </div>
+                    
+                    {showHistory && (
+                        <div>
+                            {loadingHistory ? (
+                                <p className="note">Loading history...</p>
+                            ) : readingHistory.length === 0 ? (
+                                <p className="note">No saved readings yet. Calculate a bill and save it to see your history.</p>
+                            ) : (
+                                <div className="history-list">
+                                    {readingHistory.map((reading) => (
+                                        <div key={reading.id} className="history-item" style={{
+                                            padding: '16px',
+                                            border: '1px solid var(--border)',
+                                            borderRadius: '8px',
+                                            marginBottom: '12px',
+                                            background: 'rgba(90, 168, 255, 0.05)'
+                                        }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '8px' }}>
+                                                <div>
+                                                    <strong style={{ color: 'var(--text)' }}>
+                                                        {new Date(reading.calculation_date).toLocaleDateString('en-US', {
+                                                            year: 'numeric',
+                                                            month: 'short',
+                                                            day: 'numeric',
+                                                            hour: '2-digit',
+                                                            minute: '2-digit'
+                                                        })}
+                                                    </strong>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => deleteReading(reading.id)}
+                                                    className="btn ghost"
+                                                    style={{ padding: '4px 8px', fontSize: '12px' }}
+                                                >
+                                                    Delete
+                                                </button>
+                                            </div>
+                                            <div className="kv" style={{ fontSize: '14px' }}>
+                                                <div className="k">Previous</div>
+                                                <div className="v">{parseFloat(reading.previous_reading).toFixed(3)} m³</div>
+                                                <div className="k">Current</div>
+                                                <div className="v">{parseFloat(reading.current_reading).toFixed(3)} m³</div>
+                                                <div className="k">Consumption</div>
+                                                <div className="v">{parseFloat(reading.consumption).toFixed(2)} m³</div>
+                                                <div className="k">Total</div>
+                                                <div className="v" style={{ fontWeight: '700', color: 'var(--accent)' }}>
+                                                    {fmtMoney(parseFloat(reading.total_amount))}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     )}
                 </section>

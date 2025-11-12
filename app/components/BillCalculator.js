@@ -85,8 +85,8 @@ export default function BillCalculator() {
     const fileInputRef = useRef(null);
     const currentYear = new Date().getFullYear();
     
-    // useStackApp MUST be called unconditionally - StackProvider is rendered when env vars are present
-    // If StackProvider isn't available, this will throw, but that's OK - component will handle it
+    // useStackApp MUST be called unconditionally (React hooks rule)
+    // StackProvider is rendered when env vars are present and after mount
     const stackApp = useStackApp();
 
     useEffect(() => {

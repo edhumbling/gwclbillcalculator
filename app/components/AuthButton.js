@@ -10,27 +10,29 @@ export default function AuthButton() {
   const [loading, setLoading] = useState(true)
   const [mounted, setMounted] = useState(false)
   
-  // useStackApp MUST be called unconditionally - StackProvider is rendered when env vars are present
-  // If StackProvider isn't available, this will throw, but that's OK - component won't render
-  const app = useStackApp()
+  // Check if Stack Auth is configured
+  const projectId = process.env.NEXT_PUBLIC_STACK_PROJECT_ID
+  const publishableClientKey = process.env.NEXT_PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY
 
   useEffect(() => {
     setMounted(true)
   }, [])
 
+  // Don't render anything until mounted (prevents SSR issues)
+  if (!mounted) {
+    return null
+  }
+
+  // Don't show auth buttons if Stack Auth isn't configured
+  if (!projectId || !publishableClientKey) {
+    return null
+  }
+
+  // Now that we're mounted and have env vars, StackProvider should be available
+  // Call useStackApp unconditionally (required by React hooks rules)
+  const app = useStackApp()
+
   useEffect(() => {
-    if (!mounted) {
-      return
-    }
-
-    // Check if Stack Auth is configured
-    const projectId = process.env.NEXT_PUBLIC_STACK_PROJECT_ID
-    if (!projectId || !projectId.trim()) {
-      setLoading(false)
-      return
-    }
-
-    // Check if app is available and has required methods
     if (!app || typeof app.getUser !== 'function') {
       setLoading(false)
       return
@@ -42,7 +44,7 @@ export default function AuthButton() {
     }).catch(() => {
       setLoading(false)
     })
-  }, [app, mounted])
+  }, [app])
 
   const handleSignOut = async () => {
     if (app && typeof app.signOut === 'function') {
@@ -54,13 +56,6 @@ export default function AuthButton() {
         console.error('Sign out error:', error)
       }
     }
-  }
-
-  // Don't show auth buttons if Stack Auth isn't configured
-  const projectId = process.env.NEXT_PUBLIC_STACK_PROJECT_ID
-  const publishableClientKey = process.env.NEXT_PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY
-  if (!projectId || !publishableClientKey) {
-    return null
   }
 
   if (loading) {

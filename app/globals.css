@@ -65,7 +65,7 @@ h1{ margin: 0 0 6px; font-size: 24px; }
 @media (min-width: 640px){ .grid-2{ grid-template-columns: 1fr 1fr; } }
 
 .field label{ display: block; font-weight: 600; margin-bottom: 8px; }
-.input-wrap{ position: relative; }
+.input-wrap{ position: relative; display: flex; align-items: center; }
 .field-actions{ margin-top: 8px; display: flex; gap: 8px; }
 .btn-icon{
     padding: 8px;
@@ -79,9 +79,24 @@ h1{ margin: 0 0 6px; font-size: 24px; }
     justify-content: center;
 }
 .btn-icon:hover{ border-color: var(--accent); background: rgba(90,168,255,0.1); }
+.input-icon-left{
+    position: absolute;
+    left: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 1;
+    padding: 6px;
+    border: none;
+    background: transparent;
+    border-radius: 6px;
+}
+.input-icon-left:hover{
+    background: rgba(90,168,255,0.1);
+    border: none;
+}
 input[type="number"]{
     width: 100%;
-    padding: 12px 44px 12px 12px;
+    padding: 12px 44px 12px 40px;
     background: #0e1430;
     color: var(--text);
     border: 1px solid var(--border);
@@ -200,3 +215,4 @@ input[type="number"]:focus{ border-color: var(--accent); box-shadow: 0 0 0 3px r
     .modal{ padding: 8px; }
     .modal-content{ max-height: 95vh; }
 }
+

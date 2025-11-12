@@ -130,21 +130,53 @@ export default function BillCalculator() {
     const startCamera = async () => {
         try {
             setCameraStatus({ message: 'Accessing camera...', type: 'info', hidden: false });
+            
+            // Ensure video element is visible first
+            setShowVideo(true);
+            
+            // Wait a bit for React to render the video element
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
             const stream = await navigator.mediaDevices.getUserMedia({
                 video: { facingMode: 'environment' },
                 audio: false
             });
+            
             streamRef.current = stream;
+            
             if (videoRef.current) {
                 videoRef.current.srcObject = stream;
-                setShowVideo(true);
+                
+                // Wait for video to be ready
+                videoRef.current.onloadedmetadata = () => {
+                    videoRef.current.play().catch(err => {
+                        console.error('Error playing video:', err);
+                        setCameraStatus({ 
+                            message: 'Camera accessed but failed to start. Please try again.', 
+                            type: 'error', 
+                            hidden: false 
+                        });
+                    });
+                };
+                
                 setShowCaptureBtn(true);
                 setCameraStatus({ message: '', type: 'info', hidden: true });
+            } else {
+                throw new Error('Video element not found');
             }
         } catch (error) {
             console.error('Error accessing camera:', error);
+            setShowVideo(false);
+            let errorMessage = 'Failed to access camera. ';
+            if (error.name === 'NotAllowedError') {
+                errorMessage += 'Please grant camera permissions and try again.';
+            } else if (error.name === 'NotFoundError') {
+                errorMessage += 'No camera found on this device.';
+            } else {
+                errorMessage += 'Please ensure you have granted camera permissions.';
+            }
             setCameraStatus({ 
-                message: 'Failed to access camera. Please ensure you have granted camera permissions.', 
+                message: errorMessage, 
                 type: 'error', 
                 hidden: false 
             });
@@ -307,6 +339,18 @@ export default function BillCalculator() {
                             <div className="field">
                                 <label htmlFor="prevReading">Previous reading</label>
                                 <div className="input-wrap">
+                                    <button 
+                                        type="button" 
+                                        onClick={() => openCamera('prev', 'Previous')}
+                                        className="btn-icon input-icon-left" 
+                                        title="Capture from camera" 
+                                        aria-label="Capture previous reading from camera"
+                                    >
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                                            <circle cx="12" cy="13" r="4"></circle>
+                                        </svg>
+                                    </button>
                                     <input 
                                         type="number" 
                                         id="prevReading" 
@@ -322,26 +366,24 @@ export default function BillCalculator() {
                                     />
                                     <span className="suffix">m³</span>
                                 </div>
-                                <div className="field-actions">
-                                    <button 
-                                        type="button" 
-                                        onClick={() => openCamera('prev', 'Previous')}
-                                        className="btn-icon" 
-                                        title="Capture from camera" 
-                                        aria-label="Capture previous reading from camera"
-                                    >
-                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
-                                            <circle cx="12" cy="13" r="4"></circle>
-                                        </svg>
-                                    </button>
-                                </div>
                                 <small id="prevHelp" className="help">From your last bill or capture from camera</small>
                             </div>
 
                             <div className="field">
                                 <label htmlFor="currReading">Current reading</label>
                                 <div className="input-wrap">
+                                    <button 
+                                        type="button" 
+                                        onClick={() => openCamera('curr', 'Current')}
+                                        className="btn-icon input-icon-left" 
+                                        title="Capture from camera" 
+                                        aria-label="Capture current reading from camera"
+                                    >
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                                            <circle cx="12" cy="13" r="4"></circle>
+                                        </svg>
+                                    </button>
                                     <input 
                                         type="number" 
                                         id="currReading" 
@@ -356,20 +398,6 @@ export default function BillCalculator() {
                                         required 
                                     />
                                     <span className="suffix">m³</span>
-                                </div>
-                                <div className="field-actions">
-                                    <button 
-                                        type="button" 
-                                        onClick={() => openCamera('curr', 'Current')}
-                                        className="btn-icon" 
-                                        title="Capture from camera" 
-                                        aria-label="Capture current reading from camera"
-                                    >
-                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
-                                            <circle cx="12" cy="13" r="4"></circle>
-                                        </svg>
-                                    </button>
                                 </div>
                                 <small id="currHelp" className="help">Latest meter value or capture from camera</small>
                             </div>
@@ -457,14 +485,20 @@ export default function BillCalculator() {
                             </button>
                         </div>
                         <div className="modal-body">
-                            {showVideo && (
-                                <video 
-                                    ref={videoRef} 
-                                    autoPlay 
-                                    playsInline 
-                                    style={{ display: 'block' }}
-                                />
-                            )}
+                            <video 
+                                ref={videoRef} 
+                                autoPlay 
+                                playsInline 
+                                style={{ display: showVideo ? 'block' : 'none' }}
+                                onError={(e) => {
+                                    console.error('Video error:', e);
+                                    setCameraStatus({ 
+                                        message: 'Error loading camera stream. Please try again.', 
+                                        type: 'error', 
+                                        hidden: false 
+                                    });
+                                }}
+                            />
                             <canvas ref={canvasRef} style={{ display: 'none' }} />
                             {showPreview && (
                                 <div className="camera-preview">

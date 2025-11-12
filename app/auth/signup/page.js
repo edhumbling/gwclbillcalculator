@@ -1,19 +1,21 @@
 'use client'
 
-import { useStackApp } from '@stackframe/stack'
-import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 
 export const dynamic = 'force-dynamic'
 
 export default function SignUpPage() {
-  const app = useStackApp()
   const router = useRouter()
 
   useEffect(() => {
-    // Redirect to Stack Auth sign up
-    app.redirectToSignUp()
-  }, [app])
+    // Stack Auth middleware will handle the redirect
+    // But we can also construct the URL client-side
+    const projectId = process.env.NEXT_PUBLIC_STACK_PROJECT_ID
+    if (projectId) {
+      window.location.href = `https://stack-auth.com/sign-up?projectId=${projectId}&redirectUrl=${encodeURIComponent(window.location.origin + '/')}`
+    }
+  }, [])
 
   return (
     <div style={{
@@ -48,4 +50,3 @@ export default function SignUpPage() {
     </div>
   )
 }
-

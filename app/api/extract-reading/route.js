@@ -1,57 +1,25 @@
-const Groq = require('groq');
+import { NextResponse } from 'next/server';
+import Groq from 'groq';
 
-// Helper function to parse JSON body from request
-async function parseJsonBody(req) {
-    return new Promise((resolve, reject) => {
-        let body = '';
-        req.on('data', chunk => {
-            body += chunk.toString();
-        });
-        req.on('end', () => {
-            try {
-                resolve(JSON.parse(body));
-            } catch (error) {
-                reject(new Error('Invalid JSON in request body'));
-            }
-        });
-        req.on('error', reject);
-    });
-}
-
-module.exports = async (req, res) => {
-    // Enable CORS
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
-    if (req.method === 'OPTIONS') {
-        return res.status(200).end();
-    }
-
-    if (req.method !== 'POST') {
-        return res.status(405).json({ error: 'Method not allowed' });
-    }
-
+export async function POST(request) {
     try {
-        // Parse the request body - Vercel may or may not parse it automatically
-        let body;
-        if (req.body && typeof req.body === 'object') {
-            // Body already parsed (some Vercel configurations)
-            body = req.body;
-        } else {
-            // Parse manually from stream
-            body = await parseJsonBody(req);
-        }
+        const body = await request.json();
         const { imageBase64 } = body;
         
         if (!imageBase64) {
-            return res.status(400).json({ error: 'Image data is required' });
+            return NextResponse.json(
+                { error: 'Image data is required' },
+                { status: 400 }
+            );
         }
 
         // Validate API key exists and is a string
         const apiKey = process.env.GROQ_API_KEY;
         if (!apiKey || typeof apiKey !== 'string' || apiKey.trim() === '') {
-            return res.status(500).json({ error: 'Groq API key not configured' });
+            return NextResponse.json(
+                { error: 'Groq API key not configured' },
+                { status: 500 }
+            );
         }
 
         // Initialize Groq client
@@ -66,10 +34,13 @@ module.exports = async (req, res) => {
         // Base64 is ~33% larger than binary, so we check the base64 string size
         const base64SizeMB = (base64Data.length * 3) / 4 / 1024 / 1024;
         if (base64SizeMB > 4) {
-            return res.status(413).json({ 
-                error: 'Image too large', 
-                details: `Image size is ${base64SizeMB.toFixed(2)}MB. Maximum allowed is 4MB. Please use a smaller image.` 
-            });
+            return NextResponse.json(
+                { 
+                    error: 'Image too large', 
+                    details: `Image size is ${base64SizeMB.toFixed(2)}MB. Maximum allowed is 4MB. Please use a smaller image.` 
+                },
+                { status: 413 }
+            );
         }
 
         // Create the image URL with proper data URI format as per Groq docs
@@ -114,10 +85,24 @@ module.exports = async (req, res) => {
             }
         }
 
-        res.status(200).json(result);
+        return NextResponse.json(result);
     } catch (error) {
         console.error('Error processing image:', error);
-        res.status(500).json({ error: 'Failed to process image', details: error.message });
+        return NextResponse.json(
+            { error: 'Failed to process image', details: error.message },
+            { status: 500 }
+        );
     }
-};
+}
+
+export async function OPTIONS() {
+    return new NextResponse(null, {
+        status: 200,
+        headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'POST, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type',
+        },
+    });
+}
 

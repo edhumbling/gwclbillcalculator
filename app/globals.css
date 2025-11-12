@@ -200,4 +200,3 @@ input[type="number"]:focus{ border-color: var(--accent); box-shadow: 0 0 0 3px r
     .modal{ padding: 8px; }
     .modal-content{ max-height: 95vh; }
 }
-

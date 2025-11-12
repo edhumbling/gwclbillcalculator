@@ -1,4 +1,4 @@
-import { stackServerApp } from "./lib/auth";
+import { stackServerApp } from "./stack/server";
 import { NextResponse } from "next/server";
 
 export default async function middleware(request) {

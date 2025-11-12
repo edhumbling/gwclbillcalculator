@@ -8,31 +8,22 @@ export default function AuthButton() {
   const router = useRouter()
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [mounted, setMounted] = useState(false)
   
   // Check if Stack Auth is configured
   const projectId = process.env.NEXT_PUBLIC_STACK_PROJECT_ID
   const publishableClientKey = process.env.NEXT_PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY
 
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  // Don't render anything until mounted (prevents SSR issues)
-  if (!mounted) {
-    return null
-  }
-
-  // Don't show auth buttons if Stack Auth isn't configured
-  if (!projectId || !publishableClientKey) {
-    return null
-  }
-
-  // Now that we're mounted and have env vars, StackProvider should be available
-  // Call useStackApp unconditionally (required by React hooks rules)
+  // useStackApp must be called unconditionally (React hooks rule)
+  // StackProvider is always rendered when env vars are present
   const app = useStackApp()
 
   useEffect(() => {
+    // Don't show auth buttons if Stack Auth isn't configured
+    if (!projectId || !publishableClientKey) {
+      setLoading(false)
+      return
+    }
+
     if (!app || typeof app.getUser !== 'function') {
       setLoading(false)
       return
@@ -44,7 +35,7 @@ export default function AuthButton() {
     }).catch(() => {
       setLoading(false)
     })
-  }, [app])
+  }, [app, projectId, publishableClientKey])
 
   const handleSignOut = async () => {
     if (app && typeof app.signOut === 'function') {
@@ -56,6 +47,11 @@ export default function AuthButton() {
         console.error('Sign out error:', error)
       }
     }
+  }
+
+  // Don't show auth buttons if Stack Auth isn't configured
+  if (!projectId || !publishableClientKey) {
+    return null
   }
 
   if (loading) {

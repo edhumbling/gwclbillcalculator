@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { stackServerApp } from '@/lib/auth';
+import { stackServerApp } from '@/stack/server';
 import { pool } from '@/lib/db';
 
 // Helper to get user from Stack Auth

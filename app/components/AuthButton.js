@@ -11,16 +11,30 @@ export default function AuthButton() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    app.getUser().then((u) => {
-      setUser(u)
+    // Check if Stack Auth is configured
+    if (!process.env.NEXT_PUBLIC_STACK_PROJECT_ID) {
       setLoading(false)
-    })
+      return
+    }
+
+    if (app && typeof app.getUser === 'function') {
+      app.getUser().then((u) => {
+        setUser(u)
+        setLoading(false)
+      }).catch(() => {
+        setLoading(false)
+      })
+    } else {
+      setLoading(false)
+    }
   }, [app])
 
   const handleSignOut = async () => {
-    await app.signOut()
-    router.push('/')
-    router.refresh()
+    if (app && typeof app.signOut === 'function') {
+      await app.signOut()
+      router.push('/')
+      router.refresh()
+    }
   }
 
   if (loading) {

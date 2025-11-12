@@ -1,24 +1,18 @@
 'use client'
 
 import { StackProvider } from '@stackframe/stack'
-import { useEffect, useState } from 'react'
 
 export default function StackProviderWrapper({ children }) {
-  const [mounted, setMounted] = useState(false)
+  const projectId = process.env.NEXT_PUBLIC_STACK_PROJECT_ID
+  const publishableClientKey = process.env.NEXT_PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY
 
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  // During SSR/build, just render children without StackProvider
-  if (!mounted) {
-    return <>{children}</>
-  }
-
+  // Always render StackProvider, even if env vars are missing
+  // This prevents "useStackApp must be used within a StackProvider" errors
+  // Components should handle missing configuration gracefully
   return (
     <StackProvider
-      projectId={process.env.NEXT_PUBLIC_STACK_PROJECT_ID}
-      publishableClientKey={process.env.NEXT_PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY}
+      projectId={projectId || ''}
+      publishableClientKey={publishableClientKey || ''}
     >
       {children}
     </StackProvider>

@@ -296,6 +296,93 @@ export default function BillCalculator() {
         fileInputRef.current?.click();
     };
 
+    const saveReading = async () => {
+        if (!result) return;
+        
+        // Check if Stack Auth is configured
+        if (!process.env.NEXT_PUBLIC_STACK_PROJECT_ID || !stackApp) {
+            setError('Please sign in to save readings');
+            return;
+        }
+
+        try {
+            setSavingReading(true);
+            const response = await fetch('/api/readings', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    previousReading: parseFloat(prevReading),
+                    currentReading: parseFloat(currReading),
+                    consumption: result.consumption,
+                    waterAmount: result.waterAmount,
+                    fireLevy: result.fire,
+                    ruralLevy: result.rural,
+                    serviceCharge: result.service,
+                    totalAmount: result.total,
+                }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to save reading');
+            }
+
+            // Refresh history
+            await loadReadingHistory();
+            setSavingReading(false);
+            setError('');
+        } catch (e) {
+            setSavingReading(false);
+            setError(e.message);
+        }
+    };
+
+    const loadReadingHistory = async () => {
+        // Check if Stack Auth is configured
+        if (!process.env.NEXT_PUBLIC_STACK_PROJECT_ID || !stackApp) {
+            return;
+        }
+
+        try {
+            setLoadingHistory(true);
+            const response = await fetch('/api/readings?limit=20');
+            if (response.ok) {
+                const data = await response.json();
+                setReadingHistory(data.readings || []);
+            }
+            setLoadingHistory(false);
+        } catch (e) {
+            console.error('Error loading history:', e);
+            setLoadingHistory(false);
+        }
+    };
+
+    const deleteReading = async (id) => {
+        if (!confirm('Are you sure you want to delete this reading?')) return;
+
+        // Check if Stack Auth is configured
+        if (!process.env.NEXT_PUBLIC_STACK_PROJECT_ID || !stackApp) {
+            setError('Authentication required');
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/readings/${id}`, {
+                method: 'DELETE',
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to delete reading');
+            }
+
+            await loadReadingHistory();
+        } catch (e) {
+            setError(e.message);
+        }
+    };
+
     const processImage = async () => {
         if (!capturedImage || !targetInput) return;
 
@@ -385,10 +472,17 @@ export default function BillCalculator() {
 
     // Load reading history when user is authenticated
     useEffect(() => {
+        // Check if Stack Auth is configured
+        if (!process.env.NEXT_PUBLIC_STACK_PROJECT_ID || !stackApp || typeof stackApp.getUser !== 'function') {
+            return;
+        }
+
         stackApp.getUser().then((user) => {
             if (user) {
                 loadReadingHistory();
             }
+        }).catch(() => {
+            // Silently fail if auth check fails
         });
     }, []);
 

@@ -1,14 +1,29 @@
 'use client'
 
-import { StackProvider } from '@stackframe/stack'
+import { useEffect, useState } from 'react'
+import dynamic from 'next/dynamic'
+
+// Dynamically import StackProvider to avoid SSR/build issues
+const StackProvider = dynamic(
+  () => import('@stackframe/stack').then(mod => mod.StackProvider),
+  { ssr: false }
+)
 
 export default function StackProviderWrapper({ children }) {
+  const [mounted, setMounted] = useState(false)
   const projectId = process.env.NEXT_PUBLIC_STACK_PROJECT_ID
   const publishableClientKey = process.env.NEXT_PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY
 
-  // Always render StackProvider, even if env vars are missing
-  // This prevents "useStackApp must be used within a StackProvider" errors
-  // Components should handle missing configuration gracefully
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  // During SSR/build, render children without StackProvider to avoid serialization errors
+  if (!mounted || typeof window === 'undefined') {
+    return <>{children}</>
+  }
+
+  // Only render StackProvider on client side after mount
   return (
     <StackProvider
       projectId={projectId || ''}
@@ -18,4 +33,3 @@ export default function StackProviderWrapper({ children }) {
     </StackProvider>
   )
 }
-

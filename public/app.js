@@ -276,7 +276,10 @@ document.addEventListener('DOMContentLoaded', () => {
             updateStatus('Extracting reading from image...', 'info');
             processBtn.disabled = true;
 
-            const response = await fetch('/api/extract-reading', {
+            // Use absolute URL if on Vercel, relative for local dev
+            const apiUrl = '/api/extract-reading';
+            
+            const response = await fetch(apiUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

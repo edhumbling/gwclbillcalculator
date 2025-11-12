@@ -48,13 +48,15 @@ module.exports = async (req, res) => {
             return res.status(400).json({ error: 'Image data is required' });
         }
 
-        if (!process.env.GROQ_API_KEY) {
+        // Validate API key exists and is a string
+        const apiKey = process.env.GROQ_API_KEY;
+        if (!apiKey || typeof apiKey !== 'string' || apiKey.trim() === '') {
             return res.status(500).json({ error: 'Groq API key not configured' });
         }
 
         // Initialize Groq client
         const groq = new Groq({
-            apiKey: process.env.GROQ_API_KEY,
+            apiKey: apiKey.trim(),
         });
 
         // Remove data URL prefix if present

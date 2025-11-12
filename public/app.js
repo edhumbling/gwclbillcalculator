@@ -165,6 +165,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const currCameraBtn = document.getElementById('currCameraBtn');
     const modalTitle = document.getElementById('cameraModalTitle');
     
+    // Ensure modal and all camera elements are hidden on page load
+    modal.hidden = true;
+    video.hidden = true;
+    preview.hidden = true;
+    captureBtn.hidden = true;
+    retakeBtn.hidden = true;
+    processBtn.hidden = true;
+    statusEl.hidden = true;
+    
     let stream = null;
     let capturedImageData = null;
     let targetInput = null;

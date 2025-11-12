@@ -10,8 +10,7 @@ export default function AuthButton() {
   const [loading, setLoading] = useState(true)
   const [mounted, setMounted] = useState(false)
   
-  // useStackApp must be called unconditionally
-  // StackProviderWrapper ensures provider is available after mount
+  // useStackApp must be called unconditionally - StackProvider is always rendered
   const app = useStackApp()
 
   useEffect(() => {
@@ -24,12 +23,13 @@ export default function AuthButton() {
     }
 
     // Check if Stack Auth is configured
-    if (!process.env.NEXT_PUBLIC_STACK_PROJECT_ID) {
+    const projectId = process.env.NEXT_PUBLIC_STACK_PROJECT_ID
+    if (!projectId || !projectId.trim()) {
       setLoading(false)
       return
     }
 
-    // Check if app is available (provider might not be mounted yet)
+    // Check if app is available and has required methods
     if (!app || typeof app.getUser !== 'function') {
       setLoading(false)
       return
@@ -45,10 +45,20 @@ export default function AuthButton() {
 
   const handleSignOut = async () => {
     if (app && typeof app.signOut === 'function') {
-      await app.signOut()
-      router.push('/')
-      router.refresh()
+      try {
+        await app.signOut()
+        router.push('/')
+        router.refresh()
+      } catch (error) {
+        console.error('Sign out error:', error)
+      }
     }
+  }
+
+  // Don't show auth buttons if Stack Auth isn't configured
+  const projectId = process.env.NEXT_PUBLIC_STACK_PROJECT_ID
+  if (!projectId || !projectId.trim()) {
+    return null
   }
 
   if (loading) {

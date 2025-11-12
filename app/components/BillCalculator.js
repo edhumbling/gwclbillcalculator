@@ -476,7 +476,8 @@ export default function BillCalculator() {
     // Load reading history when user is authenticated
     useEffect(() => {
         // Check if Stack Auth is configured
-        if (!process.env.NEXT_PUBLIC_STACK_PROJECT_ID || !stackApp || typeof stackApp.getUser !== 'function') {
+        const projectId = process.env.NEXT_PUBLIC_STACK_PROJECT_ID;
+        if (!projectId || !projectId.trim() || !stackApp || typeof stackApp.getUser !== 'function') {
             return;
         }
 
@@ -487,7 +488,7 @@ export default function BillCalculator() {
         }).catch(() => {
             // Silently fail if auth check fails
         });
-    }, []);
+    }, [stackApp]);
 
     useEffect(() => {
         const handleEscape = (e) => {

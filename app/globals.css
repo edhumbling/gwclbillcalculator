@@ -180,10 +180,88 @@ input[type="number"]:focus{ border-color: var(--accent); box-shadow: 0 0 0 3px r
     display: flex;
     justify-content: center;
 }
-#previewImage{
+.preview-container{
+    position: relative;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+#previewImage,
+.preview-container img{
     max-width: 100%;
     border-radius: 10px;
     border: 1px solid var(--border);
+    display: block;
+}
+.preview-container img.parsing{
+    filter: brightness(0.7) contrast(1.2);
+    transition: filter 0.3s ease;
+}
+.parsing-overlay{
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 10px;
+    overflow: hidden;
+    pointer-events: none;
+}
+.scan-line{
+    position: absolute;
+    width: 100%;
+    height: 3px;
+    background: linear-gradient(
+        to bottom,
+        transparent,
+        rgba(90, 168, 255, 0.8),
+        transparent
+    );
+    box-shadow: 0 0 10px rgba(90, 168, 255, 0.6),
+                0 0 20px rgba(90, 168, 255, 0.4);
+    animation: scanAnimation 2s ease-in-out infinite;
+    z-index: 10;
+}
+@keyframes scanAnimation {
+    0% {
+        top: 0;
+        opacity: 1;
+    }
+    50% {
+        top: 50%;
+        opacity: 0.8;
+    }
+    100% {
+        top: 100%;
+        opacity: 0;
+    }
+}
+.parsing-text{
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: var(--accent);
+    font-weight: 600;
+    font-size: 18px;
+    text-shadow: 0 0 10px rgba(90, 168, 255, 0.8),
+                 0 0 20px rgba(90, 168, 255, 0.6);
+    animation: pulseText 1.5s ease-in-out infinite;
+    z-index: 11;
+    background: rgba(14, 20, 48, 0.8);
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: 1px solid var(--accent);
+}
+@keyframes pulseText {
+    0%, 100% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+    50% {
+        opacity: 0.7;
+        transform: translate(-50%, -50%) scale(1.05);
+    }
 }
 .camera-status{
     padding: 12px;

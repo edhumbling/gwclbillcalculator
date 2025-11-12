@@ -70,6 +70,7 @@ export default function BillCalculator() {
     const [showRetakeBtn, setShowRetakeBtn] = useState(false);
     const [showProcessBtn, setShowProcessBtn] = useState(false);
     const [processing, setProcessing] = useState(false);
+    const [isParsing, setIsParsing] = useState(false);
 
     const videoRef = useRef(null);
     const canvasRef = useRef(null);
@@ -243,6 +244,7 @@ export default function BillCalculator() {
         try {
             setCameraStatus({ message: 'Extracting reading from image...', type: 'info', hidden: false });
             setProcessing(true);
+            setIsParsing(true);
 
             const response = await fetch('/api/extract-reading', {
                 method: 'POST',
@@ -267,6 +269,7 @@ export default function BillCalculator() {
                 } else {
                     setCurrReading(readingValue);
                 }
+                setIsParsing(false);
                 setCameraStatus({ 
                     message: `Reading extracted: ${data.reading.toFixed(3)} m³`, 
                     type: 'success', 
@@ -277,6 +280,7 @@ export default function BillCalculator() {
                     closeModal();
                 }, 1500);
             } else {
+                setIsParsing(false);
                 setCameraStatus({ 
                     message: 'Could not extract reading from image. Please try again with a clearer photo.', 
                     type: 'error', 
@@ -286,6 +290,7 @@ export default function BillCalculator() {
             }
         } catch (error) {
             console.error('Error processing image:', error);
+            setIsParsing(false);
             setCameraStatus({ 
                 message: `Error: ${error.message}`, 
                 type: 'error', 
@@ -307,6 +312,7 @@ export default function BillCalculator() {
         setTargetInput(null);
         setCameraStatus({ message: '', type: 'info', hidden: true });
         setProcessing(false);
+        setIsParsing(false);
     };
 
     useEffect(() => {
@@ -502,7 +508,15 @@ export default function BillCalculator() {
                             <canvas ref={canvasRef} style={{ display: 'none' }} />
                             {showPreview && (
                                 <div className="camera-preview">
-                                    <img ref={previewImageRef} alt="Preview" />
+                                    <div className="preview-container">
+                                        <img ref={previewImageRef} alt="Preview" className={isParsing ? 'parsing' : ''} />
+                                        {isParsing && (
+                                            <div className="parsing-overlay">
+                                                <div className="scan-line"></div>
+                                                <div className="parsing-text">Reading...</div>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             )}
                             {!cameraStatus.hidden && (

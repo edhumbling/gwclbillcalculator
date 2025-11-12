@@ -13,6 +13,14 @@ export async function POST(request) {
             );
         }
 
+        // Ensure imageBase64 is a string
+        if (typeof imageBase64 !== 'string') {
+            return NextResponse.json(
+                { error: 'Image data must be a string' },
+                { status: 400 }
+            );
+        }
+
         // Validate API key exists and is a string
         const apiKey = process.env.GROQ_API_KEY;
         if (!apiKey || typeof apiKey !== 'string' || apiKey.trim() === '') {
@@ -70,12 +78,20 @@ export async function POST(request) {
             response_format: { type: "json_object" },
         });
 
-        const responseContent = completion.choices[0].message.content;
+        const responseContent = completion.choices[0]?.message?.content;
         let result;
+        
+        // Ensure responseContent is a string
+        if (!responseContent || typeof responseContent !== 'string') {
+            return NextResponse.json(
+                { reading: null, error: "Invalid response from AI model" },
+                { status: 500 }
+            );
+        }
         
         try {
             result = JSON.parse(responseContent);
-        } catch (e) {
+        } catch (parseError) {
             // Try to extract number from text if JSON parsing fails
             const numberMatch = responseContent.match(/[\d.]+/);
             if (numberMatch) {

@@ -5,10 +5,12 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
 export default function AuthButton() {
-  const app = useStackApp()
   const router = useRouter()
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
+  
+  // Get StackApp - StackProviderWrapper ensures provider is available after mount
+  const app = useStackApp()
 
   useEffect(() => {
     // Check if Stack Auth is configured
@@ -81,4 +83,3 @@ export default function AuthButton() {
     </div>
   )
 }
-

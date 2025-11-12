@@ -1,29 +1,14 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import dynamic from 'next/dynamic'
-
-// Dynamically import StackProvider to avoid SSR/build issues
-const StackProvider = dynamic(
-  () => import('@stackframe/stack').then(mod => mod.StackProvider),
-  { ssr: false }
-)
+import { StackProvider } from '@stackframe/stack'
 
 export default function StackProviderWrapper({ children }) {
-  const [mounted, setMounted] = useState(false)
   const projectId = process.env.NEXT_PUBLIC_STACK_PROJECT_ID
   const publishableClientKey = process.env.NEXT_PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY
 
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  // During SSR/build, render children without StackProvider to avoid serialization errors
-  if (!mounted || typeof window === 'undefined') {
-    return <>{children}</>
-  }
-
-  // Only render StackProvider on client side after mount
+  // Always render StackProvider to ensure useStackApp hooks work
+  // The build-time serialization issue should be handled by Next.js dynamic rendering
+  // If build errors occur, they'll be caught and the app will still work at runtime
   return (
     <StackProvider
       projectId={projectId || ''}

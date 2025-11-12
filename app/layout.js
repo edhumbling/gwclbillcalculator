@@ -1,6 +1,6 @@
 import './globals.css'
 import { Inter } from 'next/font/google'
-import { StackProvider } from '@stackframe/stack'
+import StackProviderWrapper from './components/StackProviderWrapper'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -13,12 +13,9 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body className={inter.className}>
-        <StackProvider
-          projectId={process.env.NEXT_PUBLIC_STACK_PROJECT_ID}
-          publishableClientKey={process.env.NEXT_PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY}
-        >
+        <StackProviderWrapper>
           {children}
-        </StackProvider>
+        </StackProviderWrapper>
       </body>
     </html>
   )

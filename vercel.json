@@ -1,5 +1,12 @@
 {
   "version": 2,
   "buildCommand": null,
-  "outputDirectory": "public"
+  "outputDirectory": "public",
+  "installCommand": "npm install --production",
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/$1"
+    }
+  ]
 }

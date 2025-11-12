@@ -1,5 +1,23 @@
 const Groq = require('groq');
 
+// Helper function to parse JSON body from request
+async function parseJsonBody(req) {
+    return new Promise((resolve, reject) => {
+        let body = '';
+        req.on('data', chunk => {
+            body += chunk.toString();
+        });
+        req.on('end', () => {
+            try {
+                resolve(JSON.parse(body));
+            } catch (error) {
+                reject(new Error('Invalid JSON in request body'));
+            }
+        });
+        req.on('error', reject);
+    });
+}
+
 module.exports = async (req, res) => {
     // Enable CORS
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -15,7 +33,16 @@ module.exports = async (req, res) => {
     }
 
     try {
-        const { imageBase64 } = req.body;
+        // Parse the request body - Vercel may or may not parse it automatically
+        let body;
+        if (req.body && typeof req.body === 'object') {
+            // Body already parsed (some Vercel configurations)
+            body = req.body;
+        } else {
+            // Parse manually from stream
+            body = await parseJsonBody(req);
+        }
+        const { imageBase64 } = body;
         
         if (!imageBase64) {
             return res.status(400).json({ error: 'Image data is required' });

@@ -3,12 +3,20 @@
 import { StackProvider } from '@stackframe/stack'
 
 export default function StackProviderWrapper({ children }) {
-  const projectId = process.env.NEXT_PUBLIC_STACK_PROJECT_ID || ''
-  const publishableClientKey = process.env.NEXT_PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY || ''
+  // Get env vars - these should be set in Vercel
+  const projectId = process.env.NEXT_PUBLIC_STACK_PROJECT_ID
+  const publishableClientKey = process.env.NEXT_PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY
 
-  // ALWAYS render StackProvider to ensure useStackApp hooks work
-  // Pass empty strings if env vars are missing - StackProvider should handle this gracefully
-  // The dynamic = 'force-dynamic' in layout.js prevents static generation issues
+  // According to Neon Auth docs, StackProvider should always be rendered
+  // Only render if we have valid env vars (don't pass empty strings)
+  if (!projectId || !publishableClientKey) {
+    // If env vars are missing, render children without provider
+    // Components will handle missing auth gracefully
+    return <>{children}</>
+  }
+
+  // Always render StackProvider when env vars are present
+  // This ensures useStackApp hooks work correctly
   return (
     <StackProvider
       projectId={projectId}

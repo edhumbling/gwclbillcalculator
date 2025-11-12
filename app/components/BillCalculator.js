@@ -85,8 +85,7 @@ export default function BillCalculator() {
     const fileInputRef = useRef(null);
     const currentYear = new Date().getFullYear();
     
-    // useStackApp must be called unconditionally
-    // StackProviderWrapper ensures provider is available after mount
+    // useStackApp must be called unconditionally - StackProvider is always rendered when env vars are present
     const stackApp = useStackApp();
 
     useEffect(() => {

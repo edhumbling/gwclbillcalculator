@@ -8,20 +8,11 @@ export default function AuthButton() {
   const router = useRouter()
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [mounted, setMounted] = useState(false)
   
-  // useStackApp must be called unconditionally - StackProvider is always rendered
+  // useStackApp must be called unconditionally - StackProvider is always rendered when env vars are present
   const app = useStackApp()
 
   useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  useEffect(() => {
-    if (!mounted) {
-      return
-    }
-
     // Check if Stack Auth is configured
     const projectId = process.env.NEXT_PUBLIC_STACK_PROJECT_ID
     if (!projectId || !projectId.trim()) {
@@ -41,7 +32,7 @@ export default function AuthButton() {
     }).catch(() => {
       setLoading(false)
     })
-  }, [app, mounted])
+  }, [app])
 
   const handleSignOut = async () => {
     if (app && typeof app.signOut === 'function') {
@@ -56,8 +47,9 @@ export default function AuthButton() {
   }
 
   // Don't show auth buttons if Stack Auth isn't configured
-  const projectId = process.env.NEXT_PUBLIC_STACK_PROJECT_ID
-  if (!projectId || !projectId.trim()) {
+  const projectIdCheck = process.env.NEXT_PUBLIC_STACK_PROJECT_ID
+  const publishableClientKey = process.env.NEXT_PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY
+  if (!projectIdCheck || !publishableClientKey) {
     return null
   }
 

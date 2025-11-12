@@ -199,6 +199,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function closeModal() {
         stopCamera();
         modal.hidden = true;
+        modal.style.display = 'none';
         video.hidden = true;
         preview.hidden = true;
         captureBtn.hidden = true;
@@ -297,6 +298,7 @@ document.addEventListener('DOMContentLoaded', () => {
         targetInput = inputElement;
         modalTitle.textContent = `Capture ${label} Reading`;
         modal.hidden = false;
+        modal.style.display = 'flex';
         capturedImageData = null;
         startCamera();
     }

@@ -76,6 +76,7 @@ export default function BillCalculator() {
     const canvasRef = useRef(null);
     const previewImageRef = useRef(null);
     const streamRef = useRef(null);
+    const fileInputRef = useRef(null);
     const currentYear = new Date().getFullYear();
 
     useEffect(() => {
@@ -235,7 +236,65 @@ export default function BillCalculator() {
         setShowRetakeBtn(false);
         setShowProcessBtn(false);
         setCapturedImage(null);
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
         startCamera();
+    };
+
+    const handleFileUpload = (event) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+            setCameraStatus({ 
+                message: 'Please select an image file', 
+                type: 'error', 
+                hidden: false 
+            });
+            return;
+        }
+
+        // Validate file size (4MB limit for base64)
+        if (file.size > 4 * 1024 * 1024) {
+            setCameraStatus({ 
+                message: 'Image too large. Maximum size is 4MB. Please use a smaller image.', 
+                type: 'error', 
+                hidden: false 
+            });
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const imageData = e.target.result;
+            setCapturedImage(imageData);
+            if (previewImageRef.current) {
+                previewImageRef.current.src = imageData;
+            }
+            
+            // Stop camera if running
+            stopCamera();
+            setShowVideo(false);
+            setShowPreview(true);
+            setShowCaptureBtn(false);
+            setShowRetakeBtn(true);
+            setShowProcessBtn(true);
+            setCameraStatus({ message: '', type: 'info', hidden: true });
+        };
+        reader.onerror = () => {
+            setCameraStatus({ 
+                message: 'Error reading file. Please try again.', 
+                type: 'error', 
+                hidden: false 
+            });
+        };
+        reader.readAsDataURL(file);
+    };
+
+    const triggerFileUpload = () => {
+        fileInputRef.current?.click();
     };
 
     const processImage = async () => {
@@ -313,6 +372,9 @@ export default function BillCalculator() {
         setCameraStatus({ message: '', type: 'info', hidden: true });
         setProcessing(false);
         setIsParsing(false);
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
     };
 
     useEffect(() => {
@@ -491,6 +553,13 @@ export default function BillCalculator() {
                             </button>
                         </div>
                         <div className="modal-body">
+                            <input 
+                                ref={fileInputRef}
+                                type="file" 
+                                accept="image/*" 
+                                style={{ display: 'none' }}
+                                onChange={handleFileUpload}
+                            />
                             <video 
                                 ref={videoRef} 
                                 autoPlay 
@@ -525,6 +594,20 @@ export default function BillCalculator() {
                                 </div>
                             )}
                             <div className="camera-actions">
+                                {!showPreview && (
+                                    <button 
+                                        type="button" 
+                                        onClick={triggerFileUpload} 
+                                        className="btn secondary"
+                                    >
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                            <polyline points="17 8 12 3 7 8"></polyline>
+                                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                                        </svg>
+                                        Upload Image
+                                    </button>
+                                )}
                                 {showCaptureBtn && (
                                     <button type="button" onClick={capturePhoto} className="btn primary">
                                         Capture Photo

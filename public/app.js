@@ -205,7 +205,10 @@ document.addEventListener('DOMContentLoaded', () => {
         captureBtn.hidden = true;
         retakeBtn.hidden = true;
         processBtn.hidden = true;
+        
+        // Clear captured image data and preview image
         capturedImageData = null;
+        previewImage.src = '';
         targetInput = null;
         hideStatus();
     }
@@ -229,11 +232,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function capturePhoto() {
         const context = canvas.getContext('2d');
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        context.drawImage(video, 0, 0);
+        const maxWidth = 1920; // Limit resolution to stay under 33MP limit
+        const maxHeight = 1920;
         
-        capturedImageData = canvas.toDataURL('image/jpeg', 0.8);
+        let width = video.videoWidth;
+        let height = video.videoHeight;
+        
+        // Scale down if too large (maintain aspect ratio)
+        if (width > maxWidth || height > maxHeight) {
+            const ratio = Math.min(maxWidth / width, maxHeight / height);
+            width = Math.floor(width * ratio);
+            height = Math.floor(height * ratio);
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        context.drawImage(video, 0, 0, width, height);
+        
+        // Use lower quality (0.7) to reduce file size and stay under 4MB limit
+        capturedImageData = canvas.toDataURL('image/jpeg', 0.7);
         previewImage.src = capturedImageData;
         
         video.hidden = true;
@@ -268,7 +285,9 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             if (!response.ok) {
-                throw new Error(`Server error: ${response.status}`);
+                const errorData = await response.json().catch(() => ({}));
+                const errorMessage = errorData.details || errorData.error || `Server error: ${response.status}`;
+                throw new Error(errorMessage);
             }
 
             const data = await response.json();
@@ -297,9 +316,16 @@ document.addEventListener('DOMContentLoaded', () => {
     function openCameraForInput(inputElement, label) {
         targetInput = inputElement;
         modalTitle.textContent = `Capture ${label} Reading`;
+        
+        // Clear any old captured image data and preview
+        capturedImageData = null;
+        previewImage.src = '';
+        preview.hidden = true;
+        retakeBtn.hidden = true;
+        processBtn.hidden = true;
+        
         modal.hidden = false;
         modal.style.display = 'flex';
-        capturedImageData = null;
         startCamera();
     }
 

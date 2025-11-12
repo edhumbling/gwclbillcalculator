@@ -59,8 +59,21 @@ module.exports = async (req, res) => {
             apiKey: apiKey.trim(),
         });
 
-        // Remove data URL prefix if present
+        // Remove data URL prefix if present and get base64 data
         const base64Data = imageBase64.replace(/^data:image\/[a-z]+;base64,/, '');
+        
+        // Validate image size (Groq limit: 4MB for base64 encoded images)
+        // Base64 is ~33% larger than binary, so we check the base64 string size
+        const base64SizeMB = (base64Data.length * 3) / 4 / 1024 / 1024;
+        if (base64SizeMB > 4) {
+            return res.status(413).json({ 
+                error: 'Image too large', 
+                details: `Image size is ${base64SizeMB.toFixed(2)}MB. Maximum allowed is 4MB. Please use a smaller image.` 
+            });
+        }
+
+        // Create the image URL with proper data URI format as per Groq docs
+        const imageUrl = `data:image/jpeg;base64,${base64Data}`;
 
         const completion = await groq.chat.completions.create({
             model: "meta-llama/llama-4-scout-17b-16e-instruct",
@@ -75,7 +88,7 @@ module.exports = async (req, res) => {
                         {
                             type: "image_url",
                             image_url: {
-                                url: `data:image/jpeg;base64,${base64Data}`,
+                                url: imageUrl,
                             },
                         },
                     ],

@@ -2,8 +2,6 @@
 
 import { useState, useEffect, useRef } from 'react'
 import Image from 'next/image'
-import { useStackApp } from '@stackframe/stack'
-import AuthButton from './AuthButton'
 
 const TARIFFS = {
     firstBlockLimitM3: 5,
@@ -73,10 +71,6 @@ export default function BillCalculator() {
     const [showProcessBtn, setShowProcessBtn] = useState(false);
     const [processing, setProcessing] = useState(false);
     const [isParsing, setIsParsing] = useState(false);
-    const [readingHistory, setReadingHistory] = useState([]);
-    const [loadingHistory, setLoadingHistory] = useState(false);
-    const [savingReading, setSavingReading] = useState(false);
-    const [showHistory, setShowHistory] = useState(false);
 
     const videoRef = useRef(null);
     const canvasRef = useRef(null);
@@ -84,10 +78,6 @@ export default function BillCalculator() {
     const streamRef = useRef(null);
     const fileInputRef = useRef(null);
     const currentYear = new Date().getFullYear();
-    
-    // useStackApp MUST be called unconditionally (React hooks rule)
-    // StackProvider is rendered when env vars are present and after mount
-    const stackApp = useStackApp();
 
     useEffect(() => {
         // Propose saved reading on mount
@@ -299,93 +289,6 @@ export default function BillCalculator() {
         fileInputRef.current?.click();
     };
 
-    const saveReading = async () => {
-        if (!result) return;
-        
-        // Check if Stack Auth is configured
-        if (!process.env.NEXT_PUBLIC_STACK_PROJECT_ID || !stackApp) {
-            setError('Please sign in to save readings');
-            return;
-        }
-
-        try {
-            setSavingReading(true);
-            const response = await fetch('/api/readings', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    previousReading: parseFloat(prevReading),
-                    currentReading: parseFloat(currReading),
-                    consumption: result.consumption,
-                    waterAmount: result.waterAmount,
-                    fireLevy: result.fire,
-                    ruralLevy: result.rural,
-                    serviceCharge: result.service,
-                    totalAmount: result.total,
-                }),
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Failed to save reading');
-            }
-
-            // Refresh history
-            await loadReadingHistory();
-            setSavingReading(false);
-            setError('');
-        } catch (e) {
-            setSavingReading(false);
-            setError(e.message);
-        }
-    };
-
-    const loadReadingHistory = async () => {
-        // Check if Stack Auth is configured
-        if (!process.env.NEXT_PUBLIC_STACK_PROJECT_ID || !stackApp) {
-            return;
-        }
-
-        try {
-            setLoadingHistory(true);
-            const response = await fetch('/api/readings?limit=20');
-            if (response.ok) {
-                const data = await response.json();
-                setReadingHistory(data.readings || []);
-            }
-            setLoadingHistory(false);
-        } catch (e) {
-            console.error('Error loading history:', e);
-            setLoadingHistory(false);
-        }
-    };
-
-    const deleteReading = async (id) => {
-        if (!confirm('Are you sure you want to delete this reading?')) return;
-
-        // Check if Stack Auth is configured
-        if (!process.env.NEXT_PUBLIC_STACK_PROJECT_ID || !stackApp) {
-            setError('Authentication required');
-            return;
-        }
-
-        try {
-            const response = await fetch(`/api/readings/${id}`, {
-                method: 'DELETE',
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to delete reading');
-            }
-
-            await loadReadingHistory();
-        } catch (e) {
-            setError(e.message);
-        }
-    };
-
     const processImage = async () => {
         if (!capturedImage || !targetInput) return;
 
@@ -473,23 +376,6 @@ export default function BillCalculator() {
         }
     }, [capturedImage, showPreview]);
 
-    // Load reading history when user is authenticated
-    useEffect(() => {
-        // Check if Stack Auth is configured
-        const projectId = process.env.NEXT_PUBLIC_STACK_PROJECT_ID;
-        if (!projectId || !projectId.trim() || !stackApp || typeof stackApp.getUser !== 'function') {
-            return;
-        }
-
-        stackApp.getUser().then((user) => {
-            if (user) {
-                loadReadingHistory();
-            }
-        }).catch(() => {
-            // Silently fail if auth check fails
-        });
-    }, [stackApp]);
-
     useEffect(() => {
         const handleEscape = (e) => {
             if (e.key === 'Escape' && showModal) {
@@ -509,7 +395,6 @@ export default function BillCalculator() {
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                     <div className="period">Domestic 611 • {currentYear}</div>
-                    <AuthButton />
                 </div>
             </header>
 
@@ -619,89 +504,6 @@ export default function BillCalculator() {
                             </div>
 
                             <p className="note">Note: This covers current charges only. Previous balances or payments are not included.</p>
-                            
-                            <div className="actions" style={{ marginTop: '16px' }}>
-                                <button 
-                                    type="button" 
-                                    onClick={saveReading} 
-                                    className="btn secondary"
-                                    disabled={savingReading}
-                                >
-                                    {savingReading ? 'Saving...' : 'Save Reading'}
-                                </button>
-                            </div>
-                        </div>
-                    )}
-                </section>
-
-                <section className="card">
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                        <h2>Reading History</h2>
-                        <button 
-                            type="button" 
-                            onClick={() => {
-                                setShowHistory(!showHistory);
-                                if (!showHistory) loadReadingHistory();
-                            }}
-                            className="btn ghost"
-                        >
-                            {showHistory ? 'Hide' : 'Show'} History
-                        </button>
-                    </div>
-                    
-                    {showHistory && (
-                        <div>
-                            {loadingHistory ? (
-                                <p className="note">Loading history...</p>
-                            ) : readingHistory.length === 0 ? (
-                                <p className="note">No saved readings yet. Calculate a bill and save it to see your history.</p>
-                            ) : (
-                                <div className="history-list">
-                                    {readingHistory.map((reading) => (
-                                        <div key={reading.id} className="history-item" style={{
-                                            padding: '16px',
-                                            border: '1px solid var(--border)',
-                                            borderRadius: '8px',
-                                            marginBottom: '12px',
-                                            background: 'rgba(90, 168, 255, 0.05)'
-                                        }}>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '8px' }}>
-                                                <div>
-                                                    <strong style={{ color: 'var(--text)' }}>
-                                                        {new Date(reading.calculation_date).toLocaleDateString('en-US', {
-                                                            year: 'numeric',
-                                                            month: 'short',
-                                                            day: 'numeric',
-                                                            hour: '2-digit',
-                                                            minute: '2-digit'
-                                                        })}
-                                                    </strong>
-                                                </div>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => deleteReading(reading.id)}
-                                                    className="btn ghost"
-                                                    style={{ padding: '4px 8px', fontSize: '12px' }}
-                                                >
-                                                    Delete
-                                                </button>
-                                            </div>
-                                            <div className="kv" style={{ fontSize: '14px' }}>
-                                                <div className="k">Previous</div>
-                                                <div className="v">{parseFloat(reading.previous_reading).toFixed(3)} m³</div>
-                                                <div className="k">Current</div>
-                                                <div className="v">{parseFloat(reading.current_reading).toFixed(3)} m³</div>
-                                                <div className="k">Consumption</div>
-                                                <div className="v">{parseFloat(reading.consumption).toFixed(2)} m³</div>
-                                                <div className="k">Total</div>
-                                                <div className="v" style={{ fontWeight: '700', color: 'var(--accent)' }}>
-                                                    {fmtMoney(parseFloat(reading.total_amount))}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
                         </div>
                     )}
                 </section>
@@ -835,4 +637,3 @@ export default function BillCalculator() {
         </>
     );
 }
-

@@ -2,6 +2,19 @@ import { NextResponse } from 'next/server';
 import { stackServerApp } from '@/lib/auth';
 import { pool, initDatabase } from '@/lib/db';
 
+// Helper to get user from Stack Auth
+async function getUser() {
+  if (!stackServerApp) {
+    return null;
+  }
+  try {
+    return await stackServerApp.getUser();
+  } catch (error) {
+    console.error('Error getting user:', error);
+    return null;
+  }
+}
+
 // Initialize database on first request
 let dbInitialized = false;
 async function ensureDbInitialized() {
@@ -16,7 +29,7 @@ export async function GET(request) {
   try {
     await ensureDbInitialized();
     
-    const user = await stackServerApp.getUser();
+    const user = await getUser();
     if (!user) {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -81,7 +94,7 @@ export async function POST(request) {
   try {
     await ensureDbInitialized();
     
-    const user = await stackServerApp.getUser();
+    const user = await getUser();
     if (!user) {
       return NextResponse.json(
         { error: 'Unauthorized' },

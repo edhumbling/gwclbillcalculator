@@ -2,10 +2,23 @@ import { NextResponse } from 'next/server';
 import { stackServerApp } from '@/lib/auth';
 import { pool } from '@/lib/db';
 
+// Helper to get user from Stack Auth
+async function getUser() {
+  if (!stackServerApp) {
+    return null;
+  }
+  try {
+    return await stackServerApp.getUser();
+  } catch (error) {
+    console.error('Error getting user:', error);
+    return null;
+  }
+}
+
 // DELETE - Delete a reading
 export async function DELETE(request, { params }) {
   try {
-    const user = await stackServerApp.getUser();
+    const user = await getUser();
     if (!user) {
       return NextResponse.json(
         { error: 'Unauthorized' },

@@ -85,7 +85,8 @@ export default function BillCalculator() {
     const fileInputRef = useRef(null);
     const currentYear = new Date().getFullYear();
     
-    // Get StackApp - StackProviderWrapper ensures provider is available after mount
+    // useStackApp must be called unconditionally
+    // StackProviderWrapper ensures provider is available after mount
     const stackApp = useStackApp();
 
     useEffect(() => {

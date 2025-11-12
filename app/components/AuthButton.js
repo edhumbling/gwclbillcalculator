@@ -8,28 +8,40 @@ export default function AuthButton() {
   const router = useRouter()
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [mounted, setMounted] = useState(false)
   
-  // Get StackApp - StackProviderWrapper ensures provider is available after mount
+  // useStackApp must be called unconditionally
+  // StackProviderWrapper ensures provider is available after mount
   const app = useStackApp()
 
   useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    if (!mounted) {
+      return
+    }
+
     // Check if Stack Auth is configured
     if (!process.env.NEXT_PUBLIC_STACK_PROJECT_ID) {
       setLoading(false)
       return
     }
 
-    if (app && typeof app.getUser === 'function') {
-      app.getUser().then((u) => {
-        setUser(u)
-        setLoading(false)
-      }).catch(() => {
-        setLoading(false)
-      })
-    } else {
+    // Check if app is available (provider might not be mounted yet)
+    if (!app || typeof app.getUser !== 'function') {
       setLoading(false)
+      return
     }
-  }, [app])
+
+    app.getUser().then((u) => {
+      setUser(u)
+      setLoading(false)
+    }).catch(() => {
+      setLoading(false)
+    })
+  }, [app, mounted])
 
   const handleSignOut = async () => {
     if (app && typeof app.signOut === 'function') {

@@ -66,6 +66,19 @@ h1{ margin: 0 0 6px; font-size: 24px; }
 
 .field label{ display: block; font-weight: 600; margin-bottom: 8px; }
 .input-wrap{ position: relative; }
+.field-actions{ margin-top: 8px; display: flex; gap: 8px; }
+.btn-icon{
+    padding: 8px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: #0e1430;
+    color: var(--text);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+.btn-icon:hover{ border-color: var(--accent); background: rgba(90,168,255,0.1); }
 input[type="number"]{
     width: 100%;
     padding: 12px 44px 12px 12px;
@@ -101,7 +114,87 @@ input[type="number"]:focus{ border-color: var(--accent); box-shadow: 0 0 0 3px r
 .bullets li{ margin: 6px 0; }
 
 
+/* Camera Modal */
+.modal{
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 16px;
+}
+.modal-content{
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    max-width: 600px;
+    width: 100%;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+.modal-header{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+}
+.modal-header h2{ margin: 0; font-size: 20px; }
+.modal-body{
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    overflow-y: auto;
+}
+#cameraVideo, #cameraCanvas{
+    width: 100%;
+    max-width: 100%;
+    border-radius: 10px;
+    background: #000;
+}
+.camera-preview{
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+#previewImage{
+    max-width: 100%;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+}
+.camera-status{
+    padding: 12px;
+    border-radius: 8px;
+    background: rgba(90,168,255,0.1);
+    border: 1px solid var(--accent);
+    color: var(--text);
+    text-align: center;
+}
+.camera-status.error{
+    background: rgba(239,68,68,0.1);
+    border-color: var(--error);
+    color: var(--error);
+}
+.camera-status.success{
+    background: rgba(34,197,94,0.1);
+    border-color: var(--success);
+    color: var(--success);
+}
+.camera-actions{
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
 @media (max-width: 640px){
     .site-footer{ justify-content: center; text-align: center; }
+    .modal{ padding: 8px; }
+    .modal-content{ max-height: 95vh; }
 }
 

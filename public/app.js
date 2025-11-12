@@ -23,9 +23,14 @@ function calculateCurrentCharges(prevReading, currReading) {
 
     const consumption = current - previous; // m³
     
-    // Threshold-based system: if consumption > 5 m³, use new rate for ALL consumption
-    const rate = consumption > TARIFFS.firstBlockLimitM3 ? TARIFFS.excessRate : TARIFFS.firstBlockRate;
-    const waterAmountRaw = consumption * rate;
+    // Tiered pricing system: first 5 m³ at lower rate, excess at higher rate
+    let waterAmountRaw;
+    if (consumption <= TARIFFS.firstBlockLimitM3) {
+        waterAmountRaw = consumption * TARIFFS.firstBlockRate;
+    } else {
+        waterAmountRaw = (TARIFFS.firstBlockLimitM3 * TARIFFS.firstBlockRate) + 
+                        ((consumption - TARIFFS.firstBlockLimitM3) * TARIFFS.excessRate);
+    }
     const waterAmount = Math.round(waterAmountRaw * 100) / 100;
     const fire = Math.round(waterAmount * TARIFFS.fireLevyRate * 100) / 100;
     const rural = Math.round(waterAmount * TARIFFS.ruralLevyRate * 100) / 100;
@@ -39,7 +44,6 @@ function calculateCurrentCharges(prevReading, currReading) {
         rural,
         service,
         total,
-        rate,
     };
 }
 
@@ -142,6 +146,179 @@ document.addEventListener('DOMContentLoaded', () => {
     const currentYear = String(new Date().getFullYear());
     document.querySelectorAll('.js-year').forEach((el) => {
         el.textContent = currentYear;
+    });
+});
+
+// Camera functionality
+document.addEventListener('DOMContentLoaded', () => {
+    const modal = document.getElementById('cameraModal');
+    const video = document.getElementById('cameraVideo');
+    const canvas = document.getElementById('cameraCanvas');
+    const preview = document.getElementById('cameraPreview');
+    const previewImage = document.getElementById('previewImage');
+    const statusEl = document.getElementById('cameraStatus');
+    const captureBtn = document.getElementById('captureBtn');
+    const retakeBtn = document.getElementById('retakeBtn');
+    const processBtn = document.getElementById('processBtn');
+    const closeBtn = document.getElementById('closeCameraBtn');
+    const prevCameraBtn = document.getElementById('prevCameraBtn');
+    const currCameraBtn = document.getElementById('currCameraBtn');
+    const modalTitle = document.getElementById('cameraModalTitle');
+    
+    let stream = null;
+    let capturedImageData = null;
+    let targetInput = null;
+
+    function updateStatus(message, type = 'info') {
+        statusEl.textContent = message;
+        statusEl.className = `camera-status ${type}`;
+        statusEl.hidden = false;
+    }
+
+    function hideStatus() {
+        statusEl.hidden = true;
+    }
+
+    function stopCamera() {
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+            stream = null;
+        }
+        video.srcObject = null;
+    }
+
+    function closeModal() {
+        stopCamera();
+        modal.hidden = true;
+        video.hidden = true;
+        preview.hidden = true;
+        captureBtn.hidden = true;
+        retakeBtn.hidden = true;
+        processBtn.hidden = true;
+        capturedImageData = null;
+        targetInput = null;
+        hideStatus();
+    }
+
+    async function startCamera() {
+        try {
+            updateStatus('Accessing camera...', 'info');
+            stream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: 'environment' }, // Use back camera on mobile
+                audio: false
+            });
+            video.srcObject = stream;
+            video.hidden = false;
+            captureBtn.hidden = false;
+            hideStatus();
+        } catch (error) {
+            console.error('Error accessing camera:', error);
+            updateStatus('Failed to access camera. Please ensure you have granted camera permissions.', 'error');
+        }
+    }
+
+    function capturePhoto() {
+        const context = canvas.getContext('2d');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        context.drawImage(video, 0, 0);
+        
+        capturedImageData = canvas.toDataURL('image/jpeg', 0.8);
+        previewImage.src = capturedImageData;
+        
+        video.hidden = true;
+        preview.hidden = false;
+        captureBtn.hidden = true;
+        retakeBtn.hidden = false;
+        processBtn.hidden = false;
+        stopCamera();
+    }
+
+    function retakePhoto() {
+        preview.hidden = true;
+        retakeBtn.hidden = true;
+        processBtn.hidden = true;
+        capturedImageData = null;
+        startCamera();
+    }
+
+    async function processImage() {
+        if (!capturedImageData || !targetInput) return;
+
+        try {
+            updateStatus('Extracting reading from image...', 'info');
+            processBtn.disabled = true;
+
+            const response = await fetch('/api/extract-reading', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ imageBase64: capturedImageData }),
+            });
+
+            if (!response.ok) {
+                throw new Error(`Server error: ${response.status}`);
+            }
+
+            const data = await response.json();
+
+            if (data.reading !== null && data.reading !== undefined) {
+                targetInput.value = parseFloat(data.reading).toFixed(3);
+                updateStatus(`Reading extracted: ${data.reading.toFixed(3)} m³`, 'success');
+                
+                // Auto-close after a short delay
+                setTimeout(() => {
+                    closeModal();
+                    // Trigger input event to update any listeners
+                    targetInput.dispatchEvent(new Event('input', { bubbles: true }));
+                }, 1500);
+            } else {
+                updateStatus('Could not extract reading from image. Please try again with a clearer photo.', 'error');
+                processBtn.disabled = false;
+            }
+        } catch (error) {
+            console.error('Error processing image:', error);
+            updateStatus(`Error: ${error.message}`, 'error');
+            processBtn.disabled = false;
+        }
+    }
+
+    function openCameraForInput(inputElement, label) {
+        targetInput = inputElement;
+        modalTitle.textContent = `Capture ${label} Reading`;
+        modal.hidden = false;
+        capturedImageData = null;
+        startCamera();
+    }
+
+    prevCameraBtn.addEventListener('click', () => {
+        const prevInput = document.getElementById('prevReading');
+        openCameraForInput(prevInput, 'Previous');
+    });
+
+    currCameraBtn.addEventListener('click', () => {
+        const currInput = document.getElementById('currReading');
+        openCameraForInput(currInput, 'Current');
+    });
+
+    captureBtn.addEventListener('click', capturePhoto);
+    retakeBtn.addEventListener('click', retakePhoto);
+    processBtn.addEventListener('click', processImage);
+    closeBtn.addEventListener('click', closeModal);
+
+    // Close modal when clicking outside
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            closeModal();
+        }
+    });
+
+    // Close modal on Escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && !modal.hidden) {
+            closeModal();
+        }
     });
 });
 

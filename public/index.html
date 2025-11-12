@@ -30,7 +30,15 @@
                             <input type="number" id="prevReading" inputmode="decimal" step="0.001" min="0" placeholder="e.g., 61.000" aria-describedby="prevHelp" required />
                             <span class="suffix">m³</span>
                         </div>
-                        <small id="prevHelp" class="help">From your last bill</small>
+                        <div class="field-actions">
+                            <button type="button" id="prevCameraBtn" class="btn-icon" title="Capture from camera" aria-label="Capture previous reading from camera">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                                    <circle cx="12" cy="13" r="4"></circle>
+                                </svg>
+                            </button>
+                        </div>
+                        <small id="prevHelp" class="help">From your last bill or capture from camera</small>
                     </div>
 
                     <div class="field">
@@ -39,7 +47,15 @@
                             <input type="number" id="currReading" inputmode="decimal" step="0.001" min="0" placeholder="e.g., 63.000" aria-describedby="currHelp" required />
                             <span class="suffix">m³</span>
                         </div>
-                        <small id="currHelp" class="help">Latest meter value</small>
+                        <div class="field-actions">
+                            <button type="button" id="currCameraBtn" class="btn-icon" title="Capture from camera" aria-label="Capture current reading from camera">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                                    <circle cx="12" cy="13" r="4"></circle>
+                                </svg>
+                            </button>
+                        </div>
+                        <small id="currHelp" class="help">Latest meter value or capture from camera</small>
                     </div>
                 </div>
 
@@ -82,8 +98,8 @@
                 <summary>Tariff details</summary>
                 <ul class="bullets">
                     <li>Domestic Category 611 (<span class="js-year"></span>, July–September, 0% adjustment)</li>
-                    <li>Consumption ≤ 5 m³: GHS 5.28176/m³</li>
-                    <li>Consumption > 5 m³: GHS 9.344558/m³ (for all consumption)</li>
+                    <li>First 5 m³: GHS 5.28176/m³</li>
+                    <li>Excess above 5 m³: GHS 9.344558/m³</li>
                     <li>Levies: 1% Fire Fighting, 2% Rural Water (on water amount)</li>
                     <li>Service charge: GHS 10.00</li>
                 </ul>
@@ -92,9 +108,37 @@
 
         <section class="card info">
             <strong>Disclaimer:</strong>
-            <p class="note">Tariffs and charges may change over time. For the most accurate and up-to-date rates, always verify with GWCL’s current published tariffs before relying on these results.</p>
+            <p class="note">Tariffs and charges may change over time. For the most accurate and up-to-date rates, always verify with GWCL's current published tariffs before relying on these results.</p>
         </section>
     </main>
+
+    <!-- Camera Modal -->
+    <div id="cameraModal" class="modal" hidden>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="cameraModalTitle">Capture Meter Reading</h2>
+                <button type="button" id="closeCameraBtn" class="btn-icon" aria-label="Close camera">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <video id="cameraVideo" autoplay playsinline hidden></video>
+                <canvas id="cameraCanvas" hidden></canvas>
+                <div id="cameraPreview" class="camera-preview" hidden>
+                    <img id="previewImage" alt="Preview" />
+                </div>
+                <div id="cameraStatus" class="camera-status"></div>
+                <div class="camera-actions">
+                    <button type="button" id="captureBtn" class="btn primary" hidden>Capture Photo</button>
+                    <button type="button" id="retakeBtn" class="btn ghost" hidden>Retake</button>
+                    <button type="button" id="processBtn" class="btn primary" hidden>Extract Reading</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <footer class="site-footer">
         <span>GWCL Current Bill Calculator • <span class="js-year"></span></span>

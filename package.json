@@ -21,7 +21,9 @@
   "homepage": "https://github.com/edhumbling/gwclbillcalculator#readme",
   "dependencies": {
     "compression": "^1.8.1",
+    "dotenv": "^17.2.3",
     "express": "^5.1.0",
+    "groq": "^4.15.0",
     "helmet": "^8.1.0",
     "morgan": "^1.10.1"
   },

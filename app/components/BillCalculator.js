@@ -365,7 +365,11 @@ export default function BillCalculator() {
             }
 
             if (data.reading !== null && data.reading !== undefined) {
-                const readingValue = parseFloat(data.reading).toFixed(3);
+                const numericReading = Number(data.reading);
+                if (!Number.isFinite(numericReading)) {
+                    throw new Error('Received non-numeric reading from server');
+                }
+                const readingValue = numericReading.toFixed(3);
                 if (targetInput === 'prev') {
                     setPrevReading(readingValue);
                 } else {
@@ -373,7 +377,7 @@ export default function BillCalculator() {
                 }
                 setIsParsing(false);
                 setCameraStatus({ 
-                    message: `Reading extracted: ${data.reading.toFixed(3)} m³`, 
+                    message: `Reading extracted: ${numericReading.toFixed(3)} m³`, 
                     type: 'success', 
                     hidden: false 
                 });

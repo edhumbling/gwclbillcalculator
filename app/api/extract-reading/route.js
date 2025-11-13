@@ -105,7 +105,7 @@ export async function POST(request) {
                         content: [
                             {
                                 type: "text",
-                                text: "This is a water meter reading. Please extract the numeric reading value from this image. The reading is typically displayed as a number with decimal places (e.g., 84.000 or 76.000). Return ONLY the numeric value as a JSON object with a 'reading' field containing the number. If you cannot clearly see the reading, return null for the reading field. Example: {\"reading\": 84.000}"
+                                text: "This is a water meter reading. Focus ONLY on the black odometer-style digits in the central display (ignore the red rotary dials). They represent the whole cubic metres consumed. Return the reading as an integer value with no decimal places and without leading zeros (e.g. digits '00101' should be reported as 101). If the digits are unclear, return the reading as null. Reply strictly as JSON: {\"reading\": <number|null>}."
                             },
                             {
                                 type: "image_url",

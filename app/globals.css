@@ -155,6 +155,8 @@ body{
         align-items: flex-end;
         gap: 4px;
     }
+}
+
 .app-layout{
     display: block;
 }

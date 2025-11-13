@@ -13,8 +13,13 @@ export async function POST(request) {
             );
         }
 
-        // Ensure imageBase64 is a string
-        if (typeof imageBase64 !== 'string') {
+        // Ensure imageBase64 is a string and convert if needed
+        let imageBase64String;
+        if (typeof imageBase64 === 'string') {
+            imageBase64String = imageBase64;
+        } else if (imageBase64 && typeof imageBase64.toString === 'function') {
+            imageBase64String = String(imageBase64);
+        } else {
             return NextResponse.json(
                 { error: 'Image data must be a string' },
                 { status: 400 }
@@ -36,7 +41,8 @@ export async function POST(request) {
         });
 
         // Remove data URL prefix if present and get base64 data
-        const base64Data = imageBase64.replace(/^data:image\/[a-z]+;base64,/, '');
+        // Ensure we're working with a string primitive
+        const base64Data = String(imageBase64String).replace(/^data:image\/[a-z]+;base64,/, '');
         
         // Validate image size (Groq limit: 4MB for base64 encoded images)
         // Base64 is ~33% larger than binary, so we check the base64 string size

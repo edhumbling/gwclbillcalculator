@@ -174,8 +174,12 @@ export default function BillCalculator() {
                 errorMessage += 'Please grant camera permissions and try again.';
             } else if (error.name === 'NotFoundError') {
                 errorMessage += 'No camera found on this device.';
+            } else if (error.name === 'NotReadableError') {
+                errorMessage += 'Camera is already in use by another application. Please close other apps using the camera and try again.';
+            } else if (error.name === 'OverconstrainedError') {
+                errorMessage += 'Camera does not support the requested settings. Please try again.';
             } else {
-                errorMessage += 'Please ensure you have granted camera permissions.';
+                errorMessage += `Error: ${error.message || 'Please ensure you have granted camera permissions.'}`;
             }
             setCameraStatus({ 
                 message: errorMessage, 
@@ -297,12 +301,21 @@ export default function BillCalculator() {
             setProcessing(true);
             setIsParsing(true);
 
+            // Ensure capturedImage is a string
+            const imageData = typeof capturedImage === 'string' 
+                ? capturedImage 
+                : String(capturedImage || '');
+
+            if (!imageData || imageData.trim() === '') {
+                throw new Error('No image data available');
+            }
+
             const response = await fetch('/api/extract-reading', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ imageBase64: capturedImage }),
+                body: JSON.stringify({ imageBase64: imageData }),
             });
 
             if (!response.ok) {

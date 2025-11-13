@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import Groq from 'groq';
+import Groq from 'groq-sdk';
 
 export async function POST(request) {
     try {
@@ -95,14 +95,6 @@ export async function POST(request) {
         
         const imageUrl = `data:image/jpeg;base64,${cleanBase64}`;
 
-        // Validate imageUrl is a string before passing to Groq
-        if (typeof imageUrl !== 'string' || imageUrl.length === 0) {
-            return NextResponse.json(
-                { error: 'Failed to prepare image data' },
-                { status: 500 }
-            );
-        }
-
         let completion;
         try {
             completion = await groq.chat.completions.create({
@@ -117,7 +109,10 @@ export async function POST(request) {
                             },
                             {
                                 type: "image_url",
-                            image_url: imageUrl,
+                                image_url: {
+                                    url: imageUrl,
+                                    detail: 'high',
+                                },
                             },
                         ],
                     },
@@ -127,11 +122,19 @@ export async function POST(request) {
                 response_format: { type: "json_object" },
             });
         } catch (groqError) {
-            console.error('Groq API error:', groqError);
+            const details =
+                typeof groqError === 'object' && groqError !== null
+                    ? {
+                        message: groqError.message,
+                        status: groqError.status,
+                        data: groqError.response?.data,
+                    }
+                    : groqError;
+            console.error('Groq API error:', details);
             return NextResponse.json(
                 { 
                     error: 'Failed to process image with AI model', 
-                    details: groqError.message || 'Unknown error from Groq API' 
+                    details: groqError?.message || groqError || 'Unknown error from Groq API' 
                 },
                 { status: 500 }
             );

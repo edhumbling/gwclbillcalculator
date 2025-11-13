@@ -138,6 +138,12 @@ export default function BillCalculator() {
             
             // Wait a bit for React to render the video element
             await new Promise(resolve => setTimeout(resolve, 100));
+
+            // Stop any existing streams before requesting a new one
+            if (streamRef.current) {
+                streamRef.current.getTracks().forEach(track => track.stop());
+                streamRef.current = null;
+            }
             
             const stream = await navigator.mediaDevices.getUserMedia({
                 video: { facingMode: 'environment' },

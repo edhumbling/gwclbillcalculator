@@ -756,322 +756,366 @@ export default function BillCalculator() {
 
             <div className={`nav-backdrop ${menuOpen ? 'open' : ''}`} onClick={closeMenu} role="presentation" />
 
-            <main className="container">
-                {activeView === 'calculator' ? (
-                    <>
-                        <section className="card">
-                            <h1>Current Bill Calculator</h1>
-                            <p className="subtext">Enter your meter readings in cubic metres (m³). 1 unit = 1 m³.</p>
-
-                            <form onSubmit={(e) => { e.preventDefault(); handleCalculate(); }} noValidate>
-                                <div className="grid-2">
-                                    <div className="field">
-                                        <label htmlFor="prevReading">Previous reading</label>
-                                        <div className="input-wrap">
-                                            <button 
-                                                type="button" 
-                                                onClick={() => openCamera('prev', 'Previous')}
-                                                className="btn-icon input-icon-left" 
-                                                title="Capture from camera" 
-                                                aria-label="Capture previous reading from camera"
-                                            >
-                                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
-                                                    <circle cx="12" cy="13" r="4"></circle>
-                                                </svg>
-                                            </button>
-                                            <input 
-                                                type="number" 
-                                                id="prevReading" 
-                                                inputMode="decimal" 
-                                                step="0.001" 
-                                                min="0" 
-                                                placeholder="e.g., 61.000" 
-                                                value={prevReading}
-                                                onChange={(e) => setPrevReading(e.target.value)}
-                                                onKeyDown={(e) => { if (e.key === 'Enter') handleCalculate(); }}
-                                                aria-describedby="prevHelp" 
-                                                required 
-                                            />
-                                            <span className="suffix">m³</span>
-                                        </div>
-                                        <small id="prevHelp" className="help">From your last bill or capture from camera</small>
-                                    </div>
-
-                                    <div className="field">
-                                        <label htmlFor="currReading">Current reading</label>
-                                        <div className="input-wrap">
-                                            <button 
-                                                type="button" 
-                                                onClick={() => openCamera('curr', 'Current')}
-                                                className="btn-icon input-icon-left" 
-                                                title="Capture from camera" 
-                                                aria-label="Capture current reading from camera"
-                                            >
-                                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
-                                                    <circle cx="12" cy="13" r="4"></circle>
-                                                </svg>
-                                            </button>
-                                            <input 
-                                                type="number" 
-                                                id="currReading" 
-                                                inputMode="decimal" 
-                                                step="0.001" 
-                                                min="0" 
-                                                placeholder="e.g., 63.000" 
-                                                value={currReading}
-                                                onChange={(e) => setCurrReading(e.target.value)}
-                                                onKeyDown={(e) => { if (e.key === 'Enter') handleCalculate(); }}
-                                                aria-describedby="currHelp" 
-                                                required 
-                                            />
-                                            <span className="suffix">m³</span>
-                                        </div>
-                                        <small id="currHelp" className="help">Latest meter value or capture from camera</small>
-                                    </div>
-                                </div>
-
-                                <div className="actions">
-                                    <button type="submit" className="btn primary">Calculate</button>
-                                    <button type="button" onClick={handleReset} className="btn ghost">Reset defaults</button>
-                                </div>
-                                {error && <p className="error" role="alert" aria-live="polite">{error}</p>}
-                            </form>
-
-                            {result && (
-                                <div className="result">
-                                    <div className="result-header">
-                                        <h2>Current charges</h2>
-                                        <div className="total">{fmtMoney(result.total)}</div>
-                                    </div>
-
-                                    <div className="kv">
-                                        <div className="k">Consumption</div>
-                                        <div className="v">{result.consumption.toFixed(2)} m³</div>
-
-                                        <div className="k">Water amount</div>
-                                        <div className="v">{fmtMoney(result.waterAmount)}</div>
-
-                                        <div className="k">1% Fire levy</div>
-                                        <div className="v">{fmtMoney(result.fire)}</div>
-
-                                        <div className="k">2% Rural water levy</div>
-                                        <div className="v">{fmtMoney(result.rural)}</div>
-
-                                        <div className="k">Service charge</div>
-                                        <div className="v">{fmtMoney(result.service)}</div>
-                                    </div>
-
-                                    <p className="note">Note: This covers current charges only. Previous balances or payments are not included.</p>
-                                </div>
-                            )}
-                        </section>
-
-                        <section className="card info">
-                            <details>
-                                <summary>Tariff details</summary>
-                                <ul className="bullets">
-                                    <li>Domestic Category 611 ({currentYear}, July–September, 0% adjustment)</li>
-                                    <li>First 5 m³: GHS 5.28176/m³</li>
-                                    <li>Excess above 5 m³: GHS 9.344558/m³</li>
-                                    <li>Levies: 1% Fire Fighting, 2% Rural Water (on water amount)</li>
-                                    <li>Service charge: GHS 10.00</li>
-                                </ul>
-                            </details>
-                        </section>
-
-                        <section className="card info">
-                            <strong>Disclaimer:</strong>
-                            <p className="note">Tariffs and charges may change over time. For the most accurate and up-to-date rates, always verify with GWCL's current published tariffs before relying on these results.</p>
-                        </section>
-                    </>
-                ) : (
-                    <section className="card history-card">
-                        <div className="history-header">
+            <div className="app-layout">
+                <aside className="sidebar">
+                    <div className="sidebar-nav">
+                        <span className="sidebar-label">Navigation</span>
+                        {navItems.map((item) => (
+                            <button
+                                key={item.id}
+                                type="button"
+                                className={`sidebar-link ${activeView === item.id ? 'active' : ''}`}
+                                onClick={() => handleSelectView(item.id)}
+                            >
+                                {item.label}
+                            </button>
+                        ))}
+                    </div>
+                    <div className="sidebar-summary">
+                        <div className="sidebar-outstanding">
+                            <span className="sidebar-label">Outstanding</span>
+                            <span className="sidebar-value">{fmtMoney(outstandingAmount)}</span>
+                        </div>
+                        <div className="sidebar-stats">
                             <div>
-                                <h1>Reading History</h1>
-                                <p className="subtext">Review past readings, adjust records, and track whether bills are paid.</p>
+                                <span className="sidebar-label">Open bills</span>
+                                <span className="sidebar-value">{historySummary.unpaidCount}</span>
                             </div>
-                            <div className="history-metrics">
-                                <div className="metric">
-                                    <span className="metric-label">Outstanding</span>
-                                    <span className="metric-value">{fmtMoney(outstandingAmount)}</span>
-                                </div>
-                                <div className="metric">
-                                    <span className="metric-label">Open bills</span>
-                                    <span className="metric-value">{historySummary.unpaidCount}</span>
-                                </div>
-                                <div className="metric">
-                                    <span className="metric-label">Paid</span>
-                                    <span className="metric-value">{historySummary.paidCount}</span>
-                                </div>
+                            <div>
+                                <span className="sidebar-label">Paid bills</span>
+                                <span className="sidebar-value">{historySummary.paidCount}</span>
                             </div>
                         </div>
                         {historySummary.lastReading && (
-                            <div className="history-last">
-                                <span>Latest reading</span>
-                                <strong>{historySummary.lastReading.currReading.toFixed(3)} m³</strong>
-                                <span>on {formatDate(historySummary.lastReading.readingDate)}</span>
+                            <div className="sidebar-last">
+                                <span className="sidebar-label">Last reading</span>
+                                <span className="sidebar-value">{historySummary.lastReading.currReading.toFixed(3)} m³</span>
+                                <span className="sidebar-muted">on {formatDate(historySummary.lastReading.readingDate)}</span>
                                 <span className={`status-pill ${historySummary.lastReading.status}`}>
                                     {historySummary.lastReading.status === 'paid' ? 'Paid' : 'Unpaid'}
                                 </span>
                             </div>
                         )}
-                        {history.length === 0 ? (
-                            <p className="note">No readings saved yet. Calculate a bill to add it to your history.</p>
-                        ) : (
-                            <div className="history-list">
-                                {orderedHistory.map((entry) => {
-                                    const isEditing = editingId === entry.id;
-                                    return (
-                                        <div key={entry.id} className={`history-item ${entry.status}`}>
-                                            <div className="history-item-header">
-                                                <div>
-                                                    <span className="history-date">{formatDate(entry.readingDate)}</span>
-                                                    <span className={`status-pill ${entry.status}`}>
-                                                        {entry.status === 'paid' ? 'Paid' : 'Unpaid'}
-                                                    </span>
+                    </div>
+                </aside>
+
+                <main className="container">
+                    {activeView === 'calculator' ? (
+                        <>
+                            <section className="card">
+                                <h1>Current Bill Calculator</h1>
+                                <p className="subtext">Enter your meter readings in cubic metres (m³). 1 unit = 1 m³.</p>
+
+                                <form onSubmit={(e) => { e.preventDefault(); handleCalculate(); }} noValidate>
+                                    <div className="grid-2">
+                                        <div className="field">
+                                            <label htmlFor="prevReading">Previous reading</label>
+                                            <div className="input-wrap">
+                                                <button 
+                                                    type="button" 
+                                                    onClick={() => openCamera('prev', 'Previous')}
+                                                    className="btn-icon input-icon-left" 
+                                                    title="Capture from camera" 
+                                                    aria-label="Capture previous reading from camera"
+                                                >
+                                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                                                        <circle cx="12" cy="13" r="4"></circle>
+                                                    </svg>
+                                                </button>
+                                                <input 
+                                                    type="number" 
+                                                    id="prevReading" 
+                                                    inputMode="decimal" 
+                                                    step="0.001" 
+                                                    min="0" 
+                                                    placeholder="e.g., 61.000" 
+                                                    value={prevReading}
+                                                    onChange={(e) => setPrevReading(e.target.value)}
+                                                    onKeyDown={(e) => { if (e.key === 'Enter') handleCalculate(); }}
+                                                    aria-describedby="prevHelp" 
+                                                    required 
+                                                />
+                                                <span className="suffix">m³</span>
+                                            </div>
+                                            <small id="prevHelp" className="help">From your last bill or capture from camera</small>
+                                        </div>
+
+                                        <div className="field">
+                                            <label htmlFor="currReading">Current reading</label>
+                                            <div className="input-wrap">
+                                                <button 
+                                                    type="button" 
+                                                    onClick={() => openCamera('curr', 'Current')}
+                                                    className="btn-icon input-icon-left" 
+                                                    title="Capture from camera" 
+                                                    aria-label="Capture current reading from camera"
+                                                >
+                                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                                                        <circle cx="12" cy="13" r="4"></circle>
+                                                    </svg>
+                                                </button>
+                                                <input 
+                                                    type="number" 
+                                                    id="currReading" 
+                                                    inputMode="decimal" 
+                                                    step="0.001" 
+                                                    min="0" 
+                                                    placeholder="e.g., 63.000" 
+                                                    value={currReading}
+                                                    onChange={(e) => setCurrReading(e.target.value)}
+                                                    onKeyDown={(e) => { if (e.key === 'Enter') handleCalculate(); }}
+                                                    aria-describedby="currHelp" 
+                                                    required 
+                                                />
+                                                <span className="suffix">m³</span>
+                                            </div>
+                                            <small id="currHelp" className="help">Latest meter value or capture from camera</small>
+                                        </div>
+                                    </div>
+
+                                    <div className="actions">
+                                        <button type="submit" className="btn primary">Calculate</button>
+                                        <button type="button" onClick={handleReset} className="btn ghost">Reset defaults</button>
+                                    </div>
+                                    {error && <p className="error" role="alert" aria-live="polite">{error}</p>}
+                                </form>
+
+                                {result && (
+                                    <div className="result">
+                                        <div className="result-header">
+                                            <h2>Current charges</h2>
+                                            <div className="total">{fmtMoney(result.total)}</div>
+                                        </div>
+
+                                        <div className="kv">
+                                            <div className="k">Consumption</div>
+                                            <div className="v">{result.consumption.toFixed(2)} m³</div>
+
+                                            <div className="k">Water amount</div>
+                                            <div className="v">{fmtMoney(result.waterAmount)}</div>
+
+                                            <div className="k">1% Fire levy</div>
+                                            <div className="v">{fmtMoney(result.fire)}</div>
+
+                                            <div className="k">2% Rural water levy</div>
+                                            <div className="v">{fmtMoney(result.rural)}</div>
+
+                                            <div className="k">Service charge</div>
+                                            <div className="v">{fmtMoney(result.service)}</div>
+                                        </div>
+
+                                        <p className="note">Note: This covers current charges only. Previous balances or payments are not included.</p>
+                                    </div>
+                                )}
+                            </section>
+
+                            <section className="card info">
+                                <details>
+                                    <summary>Tariff details</summary>
+                                    <ul className="bullets">
+                                        <li>Domestic Category 611 ({currentYear}, July–September, 0% adjustment)</li>
+                                        <li>First 5 m³: GHS 5.28176/m³</li>
+                                        <li>Excess above 5 m³: GHS 9.344558/m³</li>
+                                        <li>Levies: 1% Fire Fighting, 2% Rural Water (on water amount)</li>
+                                        <li>Service charge: GHS 10.00</li>
+                                    </ul>
+                                </details>
+                            </section>
+
+                            <section className="card info">
+                                <strong>Disclaimer:</strong>
+                                <p className="note">Tariffs and charges may change over time. For the most accurate and up-to-date rates, always verify with GWCL's current published tariffs before relying on these results.</p>
+                            </section>
+                        </>
+                    ) : (
+                        <section className="card history-card">
+                            <div className="history-header">
+                                <div>
+                                    <h1>Reading History</h1>
+                                    <p className="subtext">Review past readings, adjust records, and track whether bills are paid.</p>
+                                </div>
+                                <div className="history-metrics">
+                                    <div className="metric">
+                                        <span className="metric-label">Outstanding</span>
+                                        <span className="metric-value">{fmtMoney(outstandingAmount)}</span>
+                                    </div>
+                                    <div className="metric">
+                                        <span className="metric-label">Open bills</span>
+                                        <span className="metric-value">{historySummary.unpaidCount}</span>
+                                    </div>
+                                    <div className="metric">
+                                        <span className="metric-label">Paid</span>
+                                        <span className="metric-value">{historySummary.paidCount}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            {historySummary.lastReading && (
+                                <div className="history-last">
+                                    <span>Latest reading</span>
+                                    <strong>{historySummary.lastReading.currReading.toFixed(3)} m³</strong>
+                                    <span>on {formatDate(historySummary.lastReading.readingDate)}</span>
+                                    <span className={`status-pill ${historySummary.lastReading.status}`}>
+                                        {historySummary.lastReading.status === 'paid' ? 'Paid' : 'Unpaid'}
+                                    </span>
+                                </div>
+                            )}
+                            {history.length === 0 ? (
+                                <p className="note">No readings saved yet. Calculate a bill to add it to your history.</p>
+                            ) : (
+                                <div className="history-list">
+                                    {orderedHistory.map((entry) => {
+                                        const isEditing = editingId === entry.id;
+                                        return (
+                                            <div key={entry.id} className={`history-item ${entry.status}`}>
+                                                <div className="history-item-header">
+                                                    <div>
+                                                        <span className="history-date">{formatDate(entry.readingDate)}</span>
+                                                        <span className={`status-pill ${entry.status}`}>
+                                                            {entry.status === 'paid' ? 'Paid' : 'Unpaid'}
+                                                        </span>
+                                                    </div>
+                                                    {!isEditing && (
+                                                        <div className="history-item-actions">
+                                                            <button type="button" className="btn ghost small" onClick={() => beginEditEntry(entry)}>
+                                                                Edit
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                className="btn ghost small"
+                                                                onClick={() => toggleEntryStatus(entry.id)}
+                                                            >
+                                                                {entry.status === 'paid' ? 'Mark unpaid' : 'Mark paid'}
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                className="btn ghost small danger"
+                                                                onClick={() => deleteHistoryEntry(entry.id)}
+                                                            >
+                                                                Delete
+                                                            </button>
+                                                        </div>
+                                                    )}
                                                 </div>
-                                                {!isEditing && (
-                                                    <div className="history-item-actions">
-                                                        <button type="button" className="btn ghost small" onClick={() => beginEditEntry(entry)}>
-                                                            Edit
-                                                        </button>
-                                                        <button
-                                                            type="button"
-                                                            className="btn ghost small"
-                                                            onClick={() => toggleEntryStatus(entry.id)}
-                                                        >
-                                                            {entry.status === 'paid' ? 'Mark unpaid' : 'Mark paid'}
-                                                        </button>
-                                                        <button
-                                                            type="button"
-                                                            className="btn ghost small danger"
-                                                            onClick={() => deleteHistoryEntry(entry.id)}
-                                                        >
-                                                            Delete
-                                                        </button>
+                                                {isEditing ? (
+                                                    <form
+                                                        className="history-edit"
+                                                        onSubmit={(e) => {
+                                                            e.preventDefault();
+                                                            saveEditEntry(entry.id);
+                                                        }}
+                                                    >
+                                                        <div className="history-edit-grid">
+                                                            <label>
+                                                                <span>Reading date</span>
+                                                                <input
+                                                                    type="date"
+                                                                    value={editForm?.date || ''}
+                                                                    onChange={(e) => updateEditFormField('date', e.target.value)}
+                                                                    required
+                                                                />
+                                                            </label>
+                                                            <label>
+                                                                <span>Previous reading (m³)</span>
+                                                                <input
+                                                                    type="number"
+                                                                    step="0.001"
+                                                                    min="0"
+                                                                    value={editForm?.prevReading || ''}
+                                                                    onChange={(e) => updateEditFormField('prevReading', e.target.value)}
+                                                                    required
+                                                                />
+                                                            </label>
+                                                            <label>
+                                                                <span>Current reading (m³)</span>
+                                                                <input
+                                                                    type="number"
+                                                                    step="0.001"
+                                                                    min="0"
+                                                                    value={editForm?.currReading || ''}
+                                                                    onChange={(e) => updateEditFormField('currReading', e.target.value)}
+                                                                    required
+                                                                />
+                                                            </label>
+                                                            <label>
+                                                                <span>Status</span>
+                                                                <select
+                                                                    value={editForm?.status || 'unpaid'}
+                                                                    onChange={(e) => updateEditFormField('status', e.target.value)}
+                                                                >
+                                                                    <option value="unpaid">Unpaid</option>
+                                                                    <option value="paid">Paid</option>
+                                                                </select>
+                                                            </label>
+                                                            <label className="span-2">
+                                                                <span>Notes</span>
+                                                                <textarea
+                                                                    rows={2}
+                                                                    placeholder="Optional comment"
+                                                                    value={editForm?.notes || ''}
+                                                                    onChange={(e) => updateEditFormField('notes', e.target.value)}
+                                                                />
+                                                            </label>
+                                                        </div>
+                                                        {historyError && <p className="error history-error">{historyError}</p>}
+                                                        <div className="history-edit-actions">
+                                                            <button type="submit" className="btn primary small">Save changes</button>
+                                                            <button type="button" className="btn ghost small" onClick={cancelEditEntry}>Cancel</button>
+                                                        </div>
+                                                    </form>
+                                                ) : (
+                                                    <div className="history-details">
+                                                        <div className="detail-row">
+                                                            <span>Previous</span>
+                                                            <span>{entry.prevReading.toFixed(3)} m³</span>
+                                                        </div>
+                                                        <div className="detail-row">
+                                                            <span>Current</span>
+                                                            <span>{entry.currReading.toFixed(3)} m³</span>
+                                                        </div>
+                                                        <div className="detail-row">
+                                                            <span>Consumption</span>
+                                                            <span>{entry.consumption.toFixed(2)} m³</span>
+                                                        </div>
+                                                        <div className="detail-row">
+                                                            <span>Water amount</span>
+                                                            <span>{fmtMoney(entry.waterAmount)}</span>
+                                                        </div>
+                                                        <div className="detail-row">
+                                                            <span>Levies (Fire + Rural)</span>
+                                                            <span>{fmtMoney(entry.fire + entry.rural)}</span>
+                                                        </div>
+                                                        <div className="detail-row">
+                                                            <span>Service charge</span>
+                                                            <span>{fmtMoney(entry.service)}</span>
+                                                        </div>
+                                                        <div className="detail-row total">
+                                                            <span>Total bill</span>
+                                                            <span>{fmtMoney(entry.total)}</span>
+                                                        </div>
+                                                        {entry.status === 'paid' && entry.paidAt && (
+                                                            <div className="history-paid">
+                                                                Paid on {formatDate(entry.paidAt)}
+                                                            </div>
+                                                        )}
+                                                        {entry.notes && (
+                                                            <div className="history-notes">
+                                                                <span>Notes</span>
+                                                                <p>{entry.notes}</p>
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 )}
                                             </div>
-                                            {isEditing ? (
-                                                <form
-                                                    className="history-edit"
-                                                    onSubmit={(e) => {
-                                                        e.preventDefault();
-                                                        saveEditEntry(entry.id);
-                                                    }}
-                                                >
-                                                    <div className="history-edit-grid">
-                                                        <label>
-                                                            <span>Reading date</span>
-                                                            <input
-                                                                type="date"
-                                                                value={editForm?.date || ''}
-                                                                onChange={(e) => updateEditFormField('date', e.target.value)}
-                                                                required
-                                                            />
-                                                        </label>
-                                                        <label>
-                                                            <span>Previous reading (m³)</span>
-                                                            <input
-                                                                type="number"
-                                                                step="0.001"
-                                                                min="0"
-                                                                value={editForm?.prevReading || ''}
-                                                                onChange={(e) => updateEditFormField('prevReading', e.target.value)}
-                                                                required
-                                                            />
-                                                        </label>
-                                                        <label>
-                                                            <span>Current reading (m³)</span>
-                                                            <input
-                                                                type="number"
-                                                                step="0.001"
-                                                                min="0"
-                                                                value={editForm?.currReading || ''}
-                                                                onChange={(e) => updateEditFormField('currReading', e.target.value)}
-                                                                required
-                                                            />
-                                                        </label>
-                                                        <label>
-                                                            <span>Status</span>
-                                                            <select
-                                                                value={editForm?.status || 'unpaid'}
-                                                                onChange={(e) => updateEditFormField('status', e.target.value)}
-                                                            >
-                                                                <option value="unpaid">Unpaid</option>
-                                                                <option value="paid">Paid</option>
-                                                            </select>
-                                                        </label>
-                                                        <label className="span-2">
-                                                            <span>Notes</span>
-                                                            <textarea
-                                                                rows={2}
-                                                                placeholder="Optional comment"
-                                                                value={editForm?.notes || ''}
-                                                                onChange={(e) => updateEditFormField('notes', e.target.value)}
-                                                            />
-                                                        </label>
-                                                    </div>
-                                                    {historyError && <p className="error history-error">{historyError}</p>}
-                                                    <div className="history-edit-actions">
-                                                        <button type="submit" className="btn primary small">Save changes</button>
-                                                        <button type="button" className="btn ghost small" onClick={cancelEditEntry}>Cancel</button>
-                                                    </div>
-                                                </form>
-                                            ) : (
-                                                <div className="history-details">
-                                                    <div className="detail-row">
-                                                        <span>Previous</span>
-                                                        <span>{entry.prevReading.toFixed(3)} m³</span>
-                                                    </div>
-                                                    <div className="detail-row">
-                                                        <span>Current</span>
-                                                        <span>{entry.currReading.toFixed(3)} m³</span>
-                                                    </div>
-                                                    <div className="detail-row">
-                                                        <span>Consumption</span>
-                                                        <span>{entry.consumption.toFixed(2)} m³</span>
-                                                    </div>
-                                                    <div className="detail-row">
-                                                        <span>Water amount</span>
-                                                        <span>{fmtMoney(entry.waterAmount)}</span>
-                                                    </div>
-                                                    <div className="detail-row">
-                                                        <span>Levies (Fire + Rural)</span>
-                                                        <span>{fmtMoney(entry.fire + entry.rural)}</span>
-                                                    </div>
-                                                    <div className="detail-row">
-                                                        <span>Service charge</span>
-                                                        <span>{fmtMoney(entry.service)}</span>
-                                                    </div>
-                                                    <div className="detail-row total">
-                                                        <span>Total bill</span>
-                                                        <span>{fmtMoney(entry.total)}</span>
-                                                    </div>
-                                                    {entry.status === 'paid' && entry.paidAt && (
-                                                        <div className="history-paid">
-                                                            Paid on {formatDate(entry.paidAt)}
-                                                        </div>
-                                                    )}
-                                                    {entry.notes && (
-                                                        <div className="history-notes">
-                                                            <span>Notes</span>
-                                                            <p>{entry.notes}</p>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            )}
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        )}
-                    </section>
-                )}
-            </main>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </section>
+                    )}
+                </main>
+            </div>
 
             <footer className="site-footer">
                 <span>GWCL Current Bill Calculator • {currentYear}</span>

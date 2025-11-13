@@ -268,16 +268,29 @@ export default function BillCalculator() {
 
         const reader = new FileReader();
         reader.onload = (e) => {
-            const imageData = e.target.result;
-            // Stop camera if running
-            stopCamera();
-            setShowVideo(false);
-            setCapturedImage(imageData);
-            setShowPreview(true);
-            setShowCaptureBtn(false);
-            setShowRetakeBtn(true);
-            setShowProcessBtn(true);
-            setCameraStatus({ message: '', type: 'info', hidden: true });
+            try {
+                const result = e.target?.result;
+                // Ensure result is a string (data URL)
+                if (!result || typeof result !== 'string') {
+                    throw new Error('Invalid file data');
+                }
+                const imageData = String(result);
+                // Stop camera if running
+                stopCamera();
+                setShowVideo(false);
+                setCapturedImage(imageData);
+                setShowPreview(true);
+                setShowCaptureBtn(false);
+                setShowRetakeBtn(true);
+                setShowProcessBtn(true);
+                setCameraStatus({ message: '', type: 'info', hidden: true });
+            } catch (err) {
+                setCameraStatus({ 
+                    message: 'Error processing file. Please try again.', 
+                    type: 'error', 
+                    hidden: false 
+                });
+            }
         };
         reader.onerror = () => {
             setCameraStatus({ 
@@ -319,12 +332,31 @@ export default function BillCalculator() {
             });
 
             if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
+                let errorData = {};
+                try {
+                    const text = await response.text();
+                    if (text) {
+                        errorData = JSON.parse(text);
+                    }
+                } catch (parseErr) {
+                    // If JSON parsing fails, use empty object
+                    console.error('Error parsing error response:', parseErr);
+                }
                 const errorMessage = errorData.details || errorData.error || `Server error: ${response.status}`;
                 throw new Error(errorMessage);
             }
 
-            const data = await response.json();
+            let data;
+            try {
+                const responseText = await response.text();
+                if (!responseText) {
+                    throw new Error('Empty response from server');
+                }
+                data = JSON.parse(responseText);
+            } catch (parseErr) {
+                console.error('Error parsing response:', parseErr);
+                throw new Error('Invalid response from server');
+            }
 
             if (data.reading !== null && data.reading !== undefined) {
                 const readingValue = parseFloat(data.reading).toFixed(3);

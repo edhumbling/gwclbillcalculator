@@ -42,7 +42,23 @@ export async function POST(request) {
 
         // Remove data URL prefix if present and get base64 data
         // Ensure we're working with a string primitive
-        const base64Data = String(imageBase64String).replace(/^data:image\/[a-z]+;base64,/, '');
+        let base64Data = String(imageBase64String);
+        
+        // Remove data URL prefix if present
+        if (base64Data.includes(',')) {
+            base64Data = base64Data.split(',')[1] || base64Data;
+        } else {
+            // If no prefix, assume it's already base64
+            base64Data = base64Data.replace(/^data:image\/[a-z]+;base64,/, '');
+        }
+        
+        // Validate that base64Data is actually a string and not empty
+        if (typeof base64Data !== 'string' || base64Data.trim() === '') {
+            return NextResponse.json(
+                { error: 'Invalid image data format' },
+                { status: 400 }
+            );
+        }
         
         // Validate image size (Groq limit: 4MB for base64 encoded images)
         // Base64 is ~33% larger than binary, so we check the base64 string size
@@ -58,31 +74,70 @@ export async function POST(request) {
         }
 
         // Create the image URL with proper data URI format as per Groq docs
-        const imageUrl = `data:image/jpeg;base64,${base64Data}`;
+        // Ensure the base64 string is clean (no whitespace, newlines, etc.)
+        const cleanBase64 = base64Data.trim().replace(/\s/g, '').replace(/\n/g, '').replace(/\r/g, '');
+        
+        // Validate base64 format (basic check - should only contain base64 characters)
+        if (!/^[A-Za-z0-9+/=]+$/.test(cleanBase64)) {
+            return NextResponse.json(
+                { error: 'Invalid base64 image data format' },
+                { status: 400 }
+            );
+        }
+        
+        // Ensure cleanBase64 is not empty
+        if (cleanBase64.length === 0) {
+            return NextResponse.json(
+                { error: 'Empty image data' },
+                { status: 400 }
+            );
+        }
+        
+        const imageUrl = `data:image/jpeg;base64,${cleanBase64}`;
 
-        const completion = await groq.chat.completions.create({
-            model: "meta-llama/llama-4-scout-17b-16e-instruct",
-            messages: [
-                {
-                    role: "user",
-                    content: [
-                        {
-                            type: "text",
-                            text: "This is a water meter reading. Please extract the numeric reading value from this image. The reading is typically displayed as a number with decimal places (e.g., 84.000 or 76.000). Return ONLY the numeric value as a JSON object with a 'reading' field containing the number. If you cannot clearly see the reading, return null for the reading field. Example: {\"reading\": 84.000}"
-                        },
-                        {
-                            type: "image_url",
-                            image_url: {
-                                url: imageUrl,
+        // Validate imageUrl is a string before passing to Groq
+        if (typeof imageUrl !== 'string' || imageUrl.length === 0) {
+            return NextResponse.json(
+                { error: 'Failed to prepare image data' },
+                { status: 500 }
+            );
+        }
+
+        let completion;
+        try {
+            completion = await groq.chat.completions.create({
+                model: "meta-llama/llama-4-scout-17b-16e-instruct",
+                messages: [
+                    {
+                        role: "user",
+                        content: [
+                            {
+                                type: "text",
+                                text: "This is a water meter reading. Please extract the numeric reading value from this image. The reading is typically displayed as a number with decimal places (e.g., 84.000 or 76.000). Return ONLY the numeric value as a JSON object with a 'reading' field containing the number. If you cannot clearly see the reading, return null for the reading field. Example: {\"reading\": 84.000}"
                             },
-                        },
-                    ],
+                            {
+                                type: "image_url",
+                                image_url: {
+                                    url: imageUrl,
+                                },
+                            },
+                        ],
+                    },
+                ],
+                temperature: 0.1,
+                max_tokens: 256,
+                response_format: { type: "json_object" },
+            });
+        } catch (groqError) {
+            console.error('Groq API error:', groqError);
+            return NextResponse.json(
+                { 
+                    error: 'Failed to process image with AI model', 
+                    details: groqError.message || 'Unknown error from Groq API' 
                 },
-            ],
-            temperature: 0.1,
-            max_tokens: 256,
-            response_format: { type: "json_object" },
-        });
+                { status: 500 }
+            );
+        }
 
         const responseContent = completion.choices[0]?.message?.content;
         let result;

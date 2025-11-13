@@ -117,9 +117,7 @@ export async function POST(request) {
                             },
                             {
                                 type: "image_url",
-                                image_url: {
-                                    url: imageUrl,
-                                },
+                            image_url: imageUrl,
                             },
                         ],
                     },
